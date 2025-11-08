@@ -1,0 +1,24 @@
+# Node.js
+node_modules/
+.env
+logs/
+*.log
+
+# Prisma
+prisma/generated/
+generated/
+
+# Java / Spring Boot
+target/
+*.jar
+*.war
+*.class
+
+
+# OS files
+.DS_Store
+
+#IDEs
+.idea
+.vscode
+
