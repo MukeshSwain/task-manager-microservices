@@ -1,22 +1,50 @@
 import bcrypt from "bcrypt"
 import prisma from "../config/prismaClient.js"
 import axios from "axios";
+import { signupSchema } from "../config/zod.js";
+import { is } from "zod/locales";
 
 export const signup = async (req, res) => {
-    const { name, email, password, role } = req.body;
     
-    
-    const existUser =await prisma.auth_User.findUnique({
-        where: {
-            email: email
-        }
-    })
-    
-    if(existUser) {
-        return res.status(400).json({ message: "User already exists" });
-    }
 
     try {
+        
+        const validation = signupSchema.safeParse(req.body);
+        if (!validation.success) {
+            const zodError = validation.error;
+            let firstErrorMessage = "Validation Error"
+            let allErrors = []
+
+            if (zodError?.issues && Array.isArray(zodError.issues)) {
+                allErrors = zodError.issues.map((issue) => ({
+                    field: issue.path ? issue.path.join():"Unknown",
+                    message: issue.message || "Validation error",
+                    code: issue.code
+                        
+                }))
+                
+            }
+            firstErrorMessage = allErrors[0]?.message || "Validation Error";
+
+            return res.status(400).json({
+                message: firstErrorMessage,
+                errors: allErrors
+            });
+
+
+          
+        }
+
+        const { name, email, password, role } = validation.data;
+        const existUser = await prisma.auth_User.findUnique({
+          where: {
+            email: email,
+          },
+        });
+
+        if (existUser) {
+          return res.status(400).json({ message: "User already exists" });
+        }
         if (!name || !email || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
