@@ -1,87 +1,82 @@
-import bcrypt from "bcrypt"
-import prisma from "../config/prismaClient.js"
+import bcrypt from "bcrypt";
+import prisma from "../config/prismaClient.js";
 import axios from "axios";
-import { signupSchema } from "../config/zod.js";
-import {redisClient} from "../index.js"
+import { loginSchema, signupSchema } from "../config/zod.js";
+import { redisClient } from "../index.js";
 import sendMail from "../config/sendMail.js";
-import crypto from "crypto"
-import { getVerifyEmailHtml } from "../config/html.js";
+import crypto from "crypto";
+import { getOtpHtml, getVerifyEmailHtml } from "../config/html.js";
 
 export const signup = async (req, res) => {
-    try {
-        
-        const validation = signupSchema.safeParse(req.body);
-        if (!validation.success) {
-            const zodError = validation.error;
-            let firstErrorMessage = "Validation Error"
-            let allErrors = []
+  try {
+    const validation = signupSchema.safeParse(req.body);
+    if (!validation.success) {
+      const zodError = validation.error;
+      let firstErrorMessage = "Validation Error";
+      let allErrors = [];
 
-            if (zodError?.issues && Array.isArray(zodError.issues)) {
-                allErrors = zodError.issues.map((issue) => ({
-                    field: issue.path ? issue.path.join():"Unknown",
-                    message: issue.message || "Validation error",
-                    code: issue.code
-                        
-                }))
-                
-            }
-            firstErrorMessage = allErrors[0]?.message || "Validation Error";
+      if (zodError?.issues && Array.isArray(zodError.issues)) {
+        allErrors = zodError.issues.map((issue) => ({
+          field: issue.path ? issue.path.join() : "Unknown",
+          message: issue.message || "Validation error",
+          code: issue.code,
+        }));
+      }
+      firstErrorMessage = allErrors[0]?.message || "Validation Error";
 
-            return res.status(400).json({
-                message: firstErrorMessage,
-                errors: allErrors
-            });
-
-
-          
-        }
-
-        const { name, email, password, role } = validation.data;
-        //Redis rate limit
-        const rateLimitKey = `register-rate-limit:${req.ip}:${email}` 
-        if (await redisClient.get(rateLimitKey)) {
-            return res.status(429).json({ message: "Too many requests, please try again later" });
-        }
-        const existUser = await prisma.auth_User.findUnique({
-          where: {
-            email: email,
-          },
-        });
-
-        
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-        if (existUser) {
-          return res.status(400).json({ message: "User already exists" });
-        }
-
-        const passwordHash = await bcrypt.hash(password, 10);
-        //Token generation for verification
-        const verifyToken = crypto.randomBytes(32).toString("hex");
-        const verifyKey = `verify:${verifyToken}`;
-        const dataStore = JSON.stringify({
-            name,
-            email,
-            password: passwordHash,
-            role,
-        })
-        await redisClient.set(verifyKey, dataStore, { EX: 300 })
-        
-        const subject = "Verify your email for Account creation"
-        const html = getVerifyEmailHtml({email,token:verifyToken})
-        await sendMail({ email, subject, html })
-        await redisClient.set(rateLimitKey, "true", { EX: 60 })
-        
-        res.json({
-            message:"If your email is valid, a verification link has been sent. It will expire in 5 minutes"
-        })
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Internal server error" });
+      return res.status(400).json({
+        message: firstErrorMessage,
+        errors: allErrors,
+      });
     }
-}
+
+    const { name, email, password, role } = validation.data;
+    //Redis rate limit
+    const rateLimitKey = `register-rate-limit:${req.ip}:${email}`;
+    if (await redisClient.get(rateLimitKey)) {
+      return res
+        .status(429)
+        .json({ message: "Too many requests, please try again later" });
+    }
+    const existUser = await prisma.auth_User.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    if (existUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    //Token generation for verification
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+    const verifyKey = `verify:${verifyToken}`;
+    const dataStore = JSON.stringify({
+      name,
+      email,
+      password: passwordHash,
+      role,
+    });
+    await redisClient.set(verifyKey, dataStore, { EX: 300 });
+
+    const subject = "Verify your email for Account creation";
+    const html = getVerifyEmailHtml({ email, token: verifyToken });
+    await sendMail({ email, subject, html });
+    await redisClient.set(rateLimitKey, "true", { EX: 60 });
+
+    res.json({
+      message:
+        "If your email is valid, a verification link has been sent. It will expire in 5 minutes",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export const verifyUser = async (req, res) => {
   try {
@@ -116,11 +111,10 @@ export const verifyUser = async (req, res) => {
     // ✅ Create user in Auth DB
     const newUser = await prisma.auth_User.create({
       data: {
-        
         email: userData.email,
         passwordHash: userData.password,
         role: userData.role.toUpperCase(),
-        isVerified: true
+        isVerified: true,
       },
     });
 
@@ -153,34 +147,90 @@ export const verifyUser = async (req, res) => {
   }
 };
 
-
 export const login = async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        if (!email || !password) {
-            return res.status(400).json({message:"All fields are required!"})
-        }
-
-        const user = await prisma.auth_User.findUnique({
-            where: {
-                email:email
-            }
-        })
-        if (!user) {
-            return res.status(400).json({message :"User not found!"})
-        }
-
-        const isMatch = await bcrypt.compare(password, user.passwordHash);
-        if (!isMatch) {
-            return res.status(400).json({ message: "User not found!" });
-        }
-
-        
-        res.status(200).json({
-            message: "login successfull",
-            
-        })
-    } catch (error) {
-        
+  try {
+    const validation = loginSchema.safeParse(req.body);
+    if (!validation.success) {
+      const zodError = validation.error;
+      let firstErrorMessage = "Validation Error";
+      let allError = [];
+      if (zodError.issues && Array.isArray(zodError.issues)) {
+        allError = zodError.issues.map((issue) => ({
+          path: issue?.path ? issue.path.join() : "Unknown",
+          message: issue.message,
+          code: issue.code,
+        }));
+      }
+      firstErrorMessage = allError[0]?.message || "Validation Error";
+      return res
+        .status(400)
+        .json({ message: firstErrorMessage, errors: allError });
     }
+
+    const { email, password } = validation.data;
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are required!" });
+    }
+    const rateLimitKey = `login-rate-limit:${req.ip}:${email}`
+    if (await redisClient.get(rateLimitKey)) {
+      return res.status(429).json({ message: "Too many requests. Please try again later." });
+    }
+
+
+
+    
+    const user = await prisma.auth_User.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials!" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials!" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpKey = `otp:${email}`;
+    await redisClient.set(otpKey, JSON.stringify(otp), { EX: 300 });
+    const subject = "OTP for verification";
+    const html = getOtpHtml({email, otp:otp})
+    await sendMail({ email, subject, html });
+    await redisClient.set(rateLimitKey, "true", { EX: 60 });
+
+    res.json({
+     message:"If your email is valid, an OTP has been sent to your email address. Please enter the OTP to verify your account.It will expire in 5 minutes.",
+   })
+  } catch (error) {
+    console.error("login error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    
+    if(!email || !otp){
+      return res.status(400).json({ message: "All fields are required!" });
+    }
+    const otpKey = `otp:${email}`
+    const storedOtpString = await redisClient.get(otpKey);
+    if (!storedOtpString) {
+      return res.status(400).json({ message: "OTP expired!" });
+    }
+    const storedOtp = JSON.parse(storedOtpString);
+    if (storedOtp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP!" });
+    }
+    await redisClient.del(otpKey);
+    return res.status(200).json({ message: "OTP verified and login successful!" });
+  } catch (error) {
+    console.error("verifyOtp error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+
+  }
 }
