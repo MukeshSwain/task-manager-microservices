@@ -69,7 +69,7 @@ export const signup = async (req, res) => {
         await redisClient.set(verifyKey, dataStore, { EX: 300 })
         
         const subject = "Verify your email for Account creation"
-        const html = getVerifyEmailHtml({email,verifyToken})
+        const html = getVerifyEmailHtml({email,token:verifyToken})
         await sendMail({ email, subject, html })
         await redisClient.set(rateLimitKey, "true", { EX: 60 })
         
