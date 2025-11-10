@@ -6,6 +6,7 @@ import { redisClient } from "../index.js";
 import sendMail from "../config/sendMail.js";
 import crypto from "crypto";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/html.js";
+import { generateToken } from "../config/generateToken.js";
 
 export const signup = async (req, res) => {
   try {
@@ -227,10 +228,30 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP!" });
     }
     await redisClient.del(otpKey);
-    return res.status(200).json({ message: "OTP verified and login successful!" });
+    const user = await prisma.auth_User.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (!user) {
+      return res.status(400).json({ message: "User not found!" });
+    }
+    const tokenData = await generateToken(user.id, res);
+
+    return res.status(200).json({ message:`Welcome ${user.email}` });
   } catch (error) {
     console.error("verifyOtp error:", error);
     return res.status(500).json({ message: "Internal server error" });
 
   }
 }
+
+export const myProfile = async (req, res) => {
+  try {
+    const user = req.user;
+    return res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+  

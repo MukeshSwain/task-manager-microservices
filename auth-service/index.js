@@ -1,6 +1,7 @@
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
+import cookieParser from "cookie-parser"
 import { createClient } from "redis"
 
 import authRoute from "./route/authRoute.js"
@@ -24,6 +25,7 @@ redisClient
     .catch((err) => console.log(err))
 const app = express()
 app.use(cors())
+app.use(cookieParser())
 app.use(express.json())
 
 app.use("/api/auth", authRoute)
