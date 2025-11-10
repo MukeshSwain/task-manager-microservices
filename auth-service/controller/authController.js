@@ -7,6 +7,7 @@ import sendMail from "../config/sendMail.js";
 import crypto from "crypto";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/html.js";
 import { generateToken } from "../config/generateToken.js";
+import jwt from "jsonwebtoken"
 
 export const signup = async (req, res) => {
   try {
@@ -255,3 +256,20 @@ export const myProfile = async (req, res) => {
   }
 }
   
+export const logout = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_TOKEN_SECRET
+    );
+    await redisClient.del(`refreshToken:${decoded.id}`)
+    await redisClient.del(`user:${decoded.id}`)
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
