@@ -255,21 +255,47 @@ export const myProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-  
+
 export const logout = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_TOKEN_SECRET
-    );
-    await redisClient.del(`refreshToken:${decoded.id}`)
-    await redisClient.del(`user:${decoded.id}`)
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token missing" });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET);
+    } catch (err) {
+      // Invalid or expired token — still clear cookies for safety
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    // Remove refresh token and any cached data
+    await Promise.all([
+      redisClient.del(`refreshToken:${decoded.id}`),
+      redisClient.del(`user:${decoded.id}`),
+    ]);
+
+    // Clear cookies
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Logout error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-}
+};

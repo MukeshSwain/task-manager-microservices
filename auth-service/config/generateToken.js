@@ -27,3 +27,14 @@ export const generateToken = async (id, res)=>{
     })
     return { accessToken, refreshToken }
 }
+
+
+export const verifyResfreshToken = async (refreshToken) => {
+    try {
+        const decode = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET)
+        return decode
+    } catch (error) {
+        
+    }
+}
+
