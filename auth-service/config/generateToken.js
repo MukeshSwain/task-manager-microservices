@@ -14,14 +14,14 @@ export const generateToken = async (id, res)=>{
     await redisClient.setEx(refreshTokenKey, 60 * 60 * 24 * 7, refreshToken)
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        // secure: true,
+        secure: true,
         sameSite: "strict",
         maxAge: 1000 * 60 * 5
     })
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        // secure: true,
+        secure: true,
         sameSite: "none",
         maxAge: 1000 * 60 * 60 * 24 * 7
     })
