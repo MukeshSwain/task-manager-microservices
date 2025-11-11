@@ -24,6 +24,7 @@ public class UserProfile {
     private String name;
     private String bio;
     private String avatarUrl;
+    private String avatarPublicId;
 
     private Map<String, Boolean> notificationPref;
 

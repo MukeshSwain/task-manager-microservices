@@ -11,7 +11,7 @@ import java.util.Map;
 public class UserProfileUpdateRequest {
     private String name;
     private String bio;
-    private String avatarUrl;
+
 
     private Map<String, Boolean> notificationPref;
 }

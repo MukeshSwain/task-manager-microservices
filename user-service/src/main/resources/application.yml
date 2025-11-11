@@ -8,3 +8,7 @@ spring:
     mongodb:
       uri: mongodb://localhost:27017/user-service
 
+cloudinary:
+  cloud_name: dlqctt0xm
+  api_key: 396912196479444
+  api_secret: wuh4nJlDdGVp_pnVS9iaT3x_tcc

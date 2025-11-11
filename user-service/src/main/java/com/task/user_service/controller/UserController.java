@@ -6,6 +6,7 @@ import com.task.user_service.dto.UserResponse;
 import com.task.user_service.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -37,5 +38,9 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<List<UserResponse>> getAllUsers(){
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+    @PostMapping("/{id}/upload-image")
+    public ResponseEntity<String> uploadImage(@PathVariable String id, @RequestParam MultipartFile file){
+        return ResponseEntity.ok(userService.uploadImage(id, file));
     }
 }

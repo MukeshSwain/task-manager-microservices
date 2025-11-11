@@ -7,14 +7,18 @@ import com.task.user_service.model.UserProfile;
 import com.task.user_service.dto.UserRequest;
 import com.task.user_service.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserService {
+    private final CloudinaryService cloudinaryService;
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(CloudinaryService cloudinaryService, UserRepository userRepository) {
+        this.cloudinaryService = cloudinaryService;
         this.userRepository = userRepository;
     }
 
@@ -38,16 +42,14 @@ public class UserService {
             throw new RuntimeException("User not found");
         }
         UserProfile userProfile = userRepository.findByAuthId(authId);
-        System.out.println(userProfile);
+
         if(request.getName() != null){
             userProfile.setName(request.getName());
         }
         if(request.getBio() != null){
             userProfile.setBio(request.getBio());
         }
-        if(request.getAvatarUrl() != null){
-            userProfile.setAvatarUrl(request.getAvatarUrl());
-        }
+
         if(request.getNotificationPref() != null){
             userProfile.setNotificationPref(request.getNotificationPref());
         }
@@ -56,7 +58,7 @@ public class UserService {
         return "User updated successfully";
     }
     public UserResponse getUserProfile(String authId){
-        if(!userRepository.existsByAuthId(authId)){
+        if(userRepository.existsByAuthId(authId)){
             throw new RuntimeException("User not found");
         }
         UserProfile userProfile = userRepository.findByAuthId(authId);
@@ -82,5 +84,32 @@ public class UserService {
                 .notificationPref(userProfile.getNotificationPref())
                 .createdAt(userProfile.getCreatedAt())
                 .build();
+    }
+
+    public String uploadImage(String authId, MultipartFile file) {
+        UserProfile userProfile = userRepository.findByAuthId(authId);
+
+        if (userProfile == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        try {
+            // 🧹 Delete old image (if exists)
+            if (userProfile.getAvatarPublicId() != null) {
+                cloudinaryService.deleteFile(userProfile.getAvatarPublicId());
+            }
+
+            // ☁️ Upload new image
+            Map<String, Object> uploadResult = cloudinaryService.uploadFile(file, "user-service/image");
+
+            // 🧩 Update DB with new image info
+            userProfile.setAvatarPublicId(uploadResult.get("public_id").toString());
+            userProfile.setAvatarUrl(uploadResult.get("secure_url").toString()); // ✅ Prefer secure_url
+            userRepository.save(userProfile);
+
+            return "Image uploaded successfully";
+        } catch (Exception e) {
+            throw new RuntimeException("Image upload failed: " + e.getMessage());
+        }
     }
 }
