@@ -32,9 +32,27 @@ export const generateToken = async (id, res)=>{
 export const verifyResfreshToken = async (refreshToken) => {
     try {
         const decode = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET)
-        return decode
+        const storedToken = await redisClient.get(`refreshToken:${decode.id}`)
+        if (refreshToken === storedToken) {
+            return decode;
+        }
+        return null;
     } catch (error) {
-        
+        console.error("Error verifying refresh token:", error);
+        return null;
     }
 }
 
+export const generateAccesToken = async(id, res) => {
+    try {
+        const accessToken = jwt.sign({ id }, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: "5m" })
+        res.cookie("accessToken", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 1000 * 60 * 5
+        })
+    } catch (error) {
+        console.error("Error generating access token:", error);
+    }
+}
