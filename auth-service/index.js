@@ -24,7 +24,10 @@ redisClient
     .then(() => console.log("Redis client connected"))
     .catch((err) => console.log(err))
 const app = express()
-app.use(cors())
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}))
 app.use(cookieParser())
 app.use(express.json())
 

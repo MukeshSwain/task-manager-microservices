@@ -6,7 +6,7 @@ import { redisClient } from "../index.js";
 import sendMail from "../config/sendMail.js";
 import crypto from "crypto";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/html.js";
-import { generateToken, verifyResfreshToken } from "../config/generateToken.js";
+import { generateAccesToken, generateToken, verifyResfreshToken } from "../config/generateToken.js";
 
 
 export const signup = async (req, res) => {
@@ -204,7 +204,8 @@ export const login = async (req, res) => {
     await redisClient.set(rateLimitKey, "true", { EX: 60 });
 
     res.json({
-     message:"If your email is valid, an OTP has been sent to your email address. Please enter the OTP to verify your account.It will expire in 5 minutes.",
+      message: "If your email is valid, an OTP has been sent to your email address. Please enter the OTP to verify your account.It will expire in 5 minutes.",
+      success:true
    })
   } catch (error) {
     console.error("login error:", error);
@@ -215,7 +216,6 @@ export const login = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    
     if(!email || !otp){
       return res.status(400).json({ message: "All fields are required!" });
     }
@@ -239,7 +239,10 @@ export const verifyOtp = async (req, res) => {
     }
     const tokenData = await generateToken(user.id, res);
 
-    return res.status(200).json({ message:`Welcome ${user.email}` });
+    return res.status(200).json({
+      message: `Welcome ${user.email}`,
+      success:true
+     });
   } catch (error) {
     console.error("verifyOtp error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -311,7 +314,7 @@ export const refreshToken = async (req, res) => {
     if (!decoded) {
       return res.status(400).json({ message: "Invalid refresh token" });
     }
-    await generateToken(decoded.id, res);
+    await generateAccesToken(decoded.id, res);
     return res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
     console.error("Refresh token error:", error);

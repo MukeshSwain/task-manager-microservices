@@ -7,7 +7,7 @@ export const isAuth = async (req, res, next) => {
         
         
         if (!token) {
-            return res.status(401).json({ message: "Unauthorized" });
+            return res.status(403).json({ message: "Unauthorized" });
         }
 
         const decodeData = jwt.verify(
