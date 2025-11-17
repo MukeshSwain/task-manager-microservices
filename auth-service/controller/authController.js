@@ -7,8 +7,6 @@ import sendMail from "../config/sendMail.js";
 import crypto from "crypto";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/html.js";
 import { generateAccesToken, generateToken, verifyResfreshToken } from "../config/generateToken.js";
-
-
 export const signup = async (req, res) => {
   try {
     const validation = signupSchema.safeParse(req.body);
@@ -73,6 +71,7 @@ export const signup = async (req, res) => {
     res.json({
       message:
         "If your email is valid, a verification link has been sent. It will expire in 5 minutes",
+      success: true,
     });
   } catch (error) {
     console.error(error);
@@ -128,6 +127,7 @@ export const verifyUser = async (req, res) => {
         name: userData.name,
         email: newUser.email,
         role: newUser.role,
+        isEmailVerified: newUser.isVerified,
       });
     } catch (err) {
       console.error("UserService error:", err.response?.data || err.message);
@@ -139,9 +139,10 @@ export const verifyUser = async (req, res) => {
     }
 
     // ✅ Success
-    return res.status(200).json({
+     res.status(200).json({
       message: "Email verified successfully. Account created.",
       userServiceResponse: response.data,
+      success: true,
     });
   } catch (error) {
     console.error("verifyUser error:", error);
@@ -241,6 +242,7 @@ export const verifyOtp = async (req, res) => {
 
     return res.status(200).json({
       message: `Welcome ${user.email}`,
+      id: user.id,
       success:true
      });
   } catch (error) {
@@ -277,11 +279,11 @@ export const logout = async (req, res) => {
       res.clearCookie("refreshToken");
       return res.status(401).json({ message: "Invalid or expired token" });
     }
-
     // Remove refresh token and any cached data
     await Promise.all([
       redisClient.del(`refreshToken:${decoded.id}`),
       redisClient.del(`user:${decoded.id}`),
+
     ]);
 
     // Clear cookies
@@ -296,7 +298,10 @@ export const logout = async (req, res) => {
       sameSite: "strict",
     });
 
-    return res.status(200).json({ message: "Logged out successfully" });
+    return res.status(200).json({
+      message: "Logged out successfully",
+      success : true
+     });
   } catch (error) {
     console.error("Logout error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -321,3 +326,4 @@ export const refreshToken = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+
