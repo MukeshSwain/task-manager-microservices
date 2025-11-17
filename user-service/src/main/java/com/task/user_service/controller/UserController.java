@@ -10,6 +10,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@CrossOrigin(
+        origins = "http://localhost:5173",
+        allowCredentials = "true"
+)
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -24,9 +28,8 @@ public class UserController {
     public ResponseEntity<String> createUser(@RequestBody UserRequest user){
         return ResponseEntity.ok(userService.createUser(user));
     }
-
     @PutMapping("/{authId}")
-    public ResponseEntity<String> updateUser(@PathVariable String authId, @RequestBody UserProfileUpdateRequest request){
+    public ResponseEntity<UserResponse> updateUser(@PathVariable String authId, @RequestBody UserProfileUpdateRequest request){
         return ResponseEntity.ok(userService.updateUser(authId, request));
     }
 

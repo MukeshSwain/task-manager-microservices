@@ -21,6 +21,7 @@ public class UserResponse {
     private String name;
     private String bio;
     private String avatarUrl;
+    private boolean isEmailVerified;
     private Map<String, Boolean> notificationPref;
     private LocalDateTime createdAt;
 

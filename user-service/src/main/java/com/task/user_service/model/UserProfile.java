@@ -25,7 +25,7 @@ public class UserProfile {
     private String bio;
     private String avatarUrl;
     private String avatarPublicId;
-
+    private Boolean isEmailVerified;
     private Map<String, Boolean> notificationPref;
 
     @CreatedDate

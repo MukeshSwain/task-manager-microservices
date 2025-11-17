@@ -27,6 +27,7 @@ public class UserService {
                 .authId(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .isEmailVerified(user.getIsEmailVerified())
                 .role(Role.valueOf(user.getRole().toUpperCase()))
                 .build();
 
@@ -36,7 +37,7 @@ public class UserService {
 
     }
 
-    public String updateUser(String authId, UserProfileUpdateRequest request){
+    public UserResponse updateUser(String authId, UserProfileUpdateRequest request){
 
         if(!userRepository.existsByAuthId(authId)){
             throw new RuntimeException("User not found");
@@ -53,15 +54,16 @@ public class UserService {
         if(request.getNotificationPref() != null){
             userProfile.setNotificationPref(request.getNotificationPref());
         }
-        userRepository.save(userProfile);
+        UserProfile user = userRepository.save(userProfile);
 
-        return "User updated successfully";
+        return toUserResponse(user);
     }
     public UserResponse getUserProfile(String authId){
-        if(userRepository.existsByAuthId(authId)){
+
+        UserProfile userProfile = userRepository.findByAuthId(authId);
+        if(userProfile == null){
             throw new RuntimeException("User not found");
         }
-        UserProfile userProfile = userRepository.findByAuthId(authId);
        return toUserResponse(userProfile);
 
     }
@@ -83,12 +85,12 @@ public class UserService {
                 .avatarUrl(userProfile.getAvatarUrl())
                 .notificationPref(userProfile.getNotificationPref())
                 .createdAt(userProfile.getCreatedAt())
+                .isEmailVerified(userProfile.getIsEmailVerified())
                 .build();
     }
 
     public String uploadImage(String authId, MultipartFile file) {
         UserProfile userProfile = userRepository.findByAuthId(authId);
-
         if (userProfile == null) {
             throw new RuntimeException("User not found");
         }
@@ -96,18 +98,18 @@ public class UserService {
         try {
             // 🧹 Delete old image (if exists)
             if (userProfile.getAvatarPublicId() != null) {
+                System.out.println("Deleting old image");
                 cloudinaryService.deleteFile(userProfile.getAvatarPublicId());
             }
 
             // ☁️ Upload new image
             Map<String, Object> uploadResult = cloudinaryService.uploadFile(file, "user-service/image");
-
             // 🧩 Update DB with new image info
             userProfile.setAvatarPublicId(uploadResult.get("public_id").toString());
             userProfile.setAvatarUrl(uploadResult.get("secure_url").toString()); // ✅ Prefer secure_url
             userRepository.save(userProfile);
 
-            return "Image uploaded successfully";
+            return uploadResult.get("secure_url").toString();
         } catch (Exception e) {
             throw new RuntimeException("Image upload failed: " + e.getMessage());
         }
