@@ -1,5 +1,6 @@
 package com.task.user_service.controller;
 
+import com.task.user_service.dto.UserLookupResponse;
 import com.task.user_service.dto.UserProfileUpdateRequest;
 import com.task.user_service.dto.UserRequest;
 import com.task.user_service.dto.UserResponse;
@@ -45,5 +46,10 @@ public class UserController {
     @PostMapping("/{id}/upload-image")
     public ResponseEntity<String> uploadImage(@PathVariable String id, @RequestParam MultipartFile file){
         return ResponseEntity.ok(userService.uploadImage(id, file));
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<UserLookupResponse> lookupByEmail(@RequestParam String email){
+        return ResponseEntity.ok(userService.lookupByEmail(email));
     }
 }

@@ -1,5 +1,6 @@
 package com.task.user_service.service;
 
+import com.task.user_service.dto.UserLookupResponse;
 import com.task.user_service.dto.UserProfileUpdateRequest;
 import com.task.user_service.dto.UserResponse;
 import com.task.user_service.model.Role;
@@ -113,5 +114,13 @@ public class UserService {
         } catch (Exception e) {
             throw new RuntimeException("Image upload failed: " + e.getMessage());
         }
+    }
+
+    public UserLookupResponse lookupByEmail(String email) {
+        UserProfile user = userRepository.findByEmail(email);
+        if(user == null){
+            return UserLookupResponse.builder().exists(false).authId(null).build();
+        }
+        return UserLookupResponse.builder().exists(true).authId(user.getAuthId()).build();
     }
 }
