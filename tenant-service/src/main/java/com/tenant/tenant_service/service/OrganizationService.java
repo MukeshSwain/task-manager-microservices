@@ -2,14 +2,15 @@ package com.tenant.tenant_service.service;
 
 import com.tenant.tenant_service.dto.*;
 import com.tenant.tenant_service.exception.BadRequestException;
-import com.tenant.tenant_service.model.Organization;
-import com.tenant.tenant_service.model.OrganizationMember;
-import com.tenant.tenant_service.model.Role;
+import com.tenant.tenant_service.messaging.NotificationProducer;
+import com.tenant.tenant_service.model.*;
+import com.tenant.tenant_service.repository.OrganizationInvitationRepo;
 import com.tenant.tenant_service.repository.OrganizationMemberRepo;
 import com.tenant.tenant_service.repository.OrganizationRepo;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 
 @Service
@@ -17,11 +18,15 @@ public class OrganizationService {
     private final OrganizationRepo organizationRepo;
     private final OrganizationMemberRepo memberRepo;
     private final UserService userService;
+    private final OrganizationInvitationRepo organizationInvitationRepo;
+    private final NotificationProducer notificationProducer;
 
-    public OrganizationService(OrganizationRepo organizationRepo, OrganizationMemberRepo memberRepo, UserService userService) {
+    public OrganizationService(OrganizationRepo organizationRepo, OrganizationMemberRepo memberRepo, UserService userService, OrganizationInvitationRepo organizationInvitationRepo, NotificationProducer notificationProducer) {
         this.organizationRepo = organizationRepo;
         this.memberRepo = memberRepo;
         this.userService = userService;
+        this.organizationInvitationRepo = organizationInvitationRepo;
+        this.notificationProducer = notificationProducer;
     }
 
     public OrganizationResponse createOrganization(CreateOrganizationRequest request){
@@ -51,11 +56,12 @@ public class OrganizationService {
 
     }
 
-    public MemberResponse addMember(String orgId, AddMemberRequest request){
-        System.out.println("kamarial gole gole nrng");
-        System.out.println(request.getPerformedBy());
+    public AddMemberResultResponse addMember(String orgId, AddMemberRequest request){
+        Organization existOrg = organizationRepo.findById(orgId).orElse(null);
+        if(existOrg == null){
+            throw new BadRequestException("Organization not found");
+        }
         Role actorRole = getRoleByAuthId(orgId, request.getPerformedBy());
-        System.out.println("Role : "+actorRole);
         if (actorRole == null ||
                 (actorRole != Role.ADMIN &&
                         actorRole != Role.OWNER &&
@@ -66,21 +72,38 @@ public class OrganizationService {
 
        UserLookupResponse userResponse = userService.lookupUserByEmail(request.getEmail());
         if (!userResponse.exists){
-            System.out.println("User not found");
-            System.out.println("You need to send a invitation to user");
-            throw new BadRequestException("User not found");
+            String token = UUID.randomUUID().toString().replace("-", "");
+            OrganizationInvitation organizationInvitation = OrganizationInvitation.builder()
+                    .org_id(orgId)
+                    .email(request.getEmail())
+                    .role(request.getRole())
+                    .token(token)
+                    .invitedBy(request.getPerformedBy())
+                    .status(InvitationStatus.PENDING)
+                    .invitedAt(OffsetDateTime.now())
+                    .build();
+
+            organizationInvitationRepo.save(organizationInvitation);
+            notificationProducer.sendUserInvitedEvent(UserInvitedEvent.builder()
+                    .email(request.getEmail())
+                    .role(request.getRole())
+                    .inviteToken(token)
+                    .orgId(orgId)
+                    .type("Invited")
+                    .build());
+            return AddMemberResultResponse.builder()
+                    .status("INVITATION_SENT")
+                    .email(request.getEmail())
+                    .role(request.getRole())
+                    .build();
+
+
         }
-
-
-
-
         String authId = userResponse.authId;
         System.out.println("AuthId : "+authId);
-        //Check user is already member of organization
         OrganizationMember existMember = memberRepo.findByOrgIdAndAuthId(orgId, authId);
         System.out.println("ExistMember : "+existMember);
         if(existMember != null){
-            System.out.println("User is already member of organization");
             throw new BadRequestException("User is already member of organization");
         }
         OrganizationMember newMember = OrganizationMember.builder()
@@ -93,7 +116,11 @@ public class OrganizationService {
         OrganizationMember savedMember = memberRepo.save(newMember);
 
 
-        return toMemberResponse(savedMember);
+        return AddMemberResultResponse.builder()
+                .status("MEMBER_ADDED")
+                .member(toMemberResponse(savedMember))
+                .email(request.getEmail())
+                .build();
 
     }
 

@@ -23,7 +23,7 @@ public class OrganizationController {
     }
 
     @PostMapping("/{orgId}/add")
-    public ResponseEntity<MemberResponse> getAuthId(@PathVariable String orgId, @RequestBody AddMemberRequest request){
+    public ResponseEntity<AddMemberResultResponse> getAuthId(@PathVariable String orgId, @RequestBody AddMemberRequest request){
         return ResponseEntity.ok(service.addMember(orgId,request));
     }
 }
