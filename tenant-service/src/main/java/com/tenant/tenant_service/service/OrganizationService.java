@@ -78,6 +78,7 @@ public class OrganizationService {
                     .email(request.getEmail())
                     .role(request.getRole())
                     .token(token)
+                    .orgName(existOrg.getName())
                     .invitedBy(request.getPerformedBy())
                     .status(InvitationStatus.PENDING)
                     .invitedAt(OffsetDateTime.now())

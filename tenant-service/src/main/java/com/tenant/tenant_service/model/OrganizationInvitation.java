@@ -19,6 +19,7 @@ public class OrganizationInvitation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    private String orgName;
     private String org_id;
     @Column(nullable = false)
     private String email;

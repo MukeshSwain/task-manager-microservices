@@ -13,5 +13,6 @@ private Boolean valid;
 private String email;
 private Role role;
 private String orgId;
+private String orgName;
 
 }

@@ -21,6 +21,7 @@ public class MemberService {
                     .email(organizationInvitation.getEmail())
                     .role(organizationInvitation.getRole())
                     .orgId(organizationInvitation.getOrg_id())
+                    .orgName()
                     .build();
         }
 
