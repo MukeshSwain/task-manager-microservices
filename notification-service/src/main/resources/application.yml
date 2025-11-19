@@ -1,0 +1,30 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notification-service
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/notification-service
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: mukeshswain2844@gmail.com
+    password: pgnn lwad jruq lzss
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+  # For JSON conversion
+  jackson:
+    serialization:
+      indent_output: true
