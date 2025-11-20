@@ -1,5 +1,5 @@
 import express from "express"
-import { login, logout, myProfile, refreshToken, signup, verifyOtp, verifyUser } from "../controller/authController.js"
+import { login, logout, myProfile, onInviteSignup, refreshToken, signup, verifyOtp, verifyUser } from "../controller/authController.js"
 import { isAuth } from "../middleware/isAuth.js"
 
 
@@ -11,4 +11,5 @@ router.post("/verify-otp", verifyOtp)
 router.get("/my-profile", isAuth, myProfile)
 router.post("/logout",logout)
 router.post("/refresh", refreshToken)
+router.post("/signup/invite", onInviteSignup)
 export default router

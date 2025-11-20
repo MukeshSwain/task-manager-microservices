@@ -6,7 +6,12 @@ import { redisClient } from "../index.js";
 import sendMail from "../config/sendMail.js";
 import crypto from "crypto";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/html.js";
-import { generateAccesToken, generateToken, verifyResfreshToken } from "../config/generateToken.js";
+import {
+  generateAccesToken,
+  generateToken,
+  verifyResfreshToken,
+} from "../config/generateToken.js";
+import { log } from "console";
 export const signup = async (req, res) => {
   try {
     const validation = signupSchema.safeParse(req.body);
@@ -139,7 +144,7 @@ export const verifyUser = async (req, res) => {
     }
 
     // ✅ Success
-     res.status(200).json({
+    res.status(200).json({
       message: "Email verified successfully. Account created.",
       userServiceResponse: response.data,
       success: true,
@@ -174,14 +179,13 @@ export const login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required!" });
     }
-    const rateLimitKey = `login-rate-limit:${req.ip}:${email}`
+    const rateLimitKey = `login-rate-limit:${req.ip}:${email}`;
     if (await redisClient.get(rateLimitKey)) {
-      return res.status(429).json({ message: "Too many requests. Please try again later." });
+      return res
+        .status(429)
+        .json({ message: "Too many requests. Please try again later." });
     }
 
-
-
-    
     const user = await prisma.auth_User.findUnique({
       where: {
         email: email,
@@ -200,14 +204,15 @@ export const login = async (req, res) => {
     const otpKey = `otp:${email}`;
     await redisClient.set(otpKey, JSON.stringify(otp), { EX: 300 });
     const subject = "OTP for verification";
-    const html = getOtpHtml({email, otp:otp})
+    const html = getOtpHtml({ email, otp: otp });
     await sendMail({ email, subject, html });
     await redisClient.set(rateLimitKey, "true", { EX: 60 });
 
     res.json({
-      message: "If your email is valid, an OTP has been sent to your email address. Please enter the OTP to verify your account.It will expire in 5 minutes.",
-      success:true
-   })
+      message:
+        "If your email is valid, an OTP has been sent to your email address. Please enter the OTP to verify your account.It will expire in 5 minutes.",
+      success: true,
+    });
   } catch (error) {
     console.error("login error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -217,10 +222,10 @@ export const login = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    if(!email || !otp){
+    if (!email || !otp) {
       return res.status(400).json({ message: "All fields are required!" });
     }
-    const otpKey = `otp:${email}`
+    const otpKey = `otp:${email}`;
     const storedOtpString = await redisClient.get(otpKey);
     if (!storedOtpString) {
       return res.status(400).json({ message: "OTP expired!" });
@@ -243,14 +248,13 @@ export const verifyOtp = async (req, res) => {
     return res.status(200).json({
       message: `Welcome ${user.email}`,
       id: user.id,
-      success:true
-     });
+      success: true,
+    });
   } catch (error) {
     console.error("verifyOtp error:", error);
     return res.status(500).json({ message: "Internal server error" });
-
   }
-}
+};
 
 export const myProfile = async (req, res) => {
   try {
@@ -259,7 +263,7 @@ export const myProfile = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 export const logout = async (req, res) => {
   try {
@@ -283,7 +287,6 @@ export const logout = async (req, res) => {
     await Promise.all([
       redisClient.del(`refreshToken:${decoded.id}`),
       redisClient.del(`user:${decoded.id}`),
-
     ]);
 
     // Clear cookies
@@ -300,8 +303,8 @@ export const logout = async (req, res) => {
 
     return res.status(200).json({
       message: "Logged out successfully",
-      success : true
-     });
+      success: true,
+    });
   } catch (error) {
     console.error("Logout error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -311,7 +314,7 @@ export const logout = async (req, res) => {
 export const refreshToken = async (req, res) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken){
+    if (!refreshToken) {
       return res.status(400).json({ message: "Invalid refresh token" });
     }
 
@@ -325,5 +328,79 @@ export const refreshToken = async (req, res) => {
     console.error("Refresh token error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
+export const onInviteSignup = async (req, res) => {
+  try {
+    const validateData = signupSchema.safeParse(req.body);
+    if (!validateData.success) {
+      const zodError = validateData.error;
+      let firstErrorMessage = "Validation Error";
+      let allErrors = [];
+
+      if (zodError?.issues && Array.isArray(zodError.issues)) {
+        allErrors = zodError.issues.map((issue) => ({
+          field: issue.path ? issue.path.join() : "Unknown",
+          message: issue.message || "Validation error",
+          code: issue.code,
+        }));
+      }
+      firstErrorMessage = allErrors[0]?.message || "Validation Error";
+
+      return res.status(400).json({
+        message: firstErrorMessage,
+        errors: allErrors,
+      });
+    }
+    const { name, email, password, role } = validateData.data;
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    const existUser = await prisma.auth_User.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (existUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const newUser = await prisma.auth_User.create({
+      data: {
+        email,
+        passwordHash,
+        role: role.toUpperCase(),
+        isVerified: true,
+      },
+    });
+    if (!newUser) {
+      return res.status(500).json({ message: "Failed to create user" });
+    }
+    try {
+      let response = await axios.post("http://localhost:8082/api/users", {
+        id: newUser.id,
+        name: name,
+        email: newUser.email,
+        role: newUser.role,
+        isEmailVerified: newUser.isVerified,
+      });
+    } catch (err) {
+      console.error("UserService error:", err.response?.data || err.message);
+      // Rollback user creation in Auth DB
+      await prisma.auth_User.delete({ where: { id: newUser.id } });
+      return res
+        .status(500)
+        .json({ message: "Failed to create user in User Service." });
+    }
+
+    return res.status(201).json({
+      message: "User created successfully",
+      success: true,
+      authId: newUser.id,
+    });
+  } catch (error) {
+    console.error("onInviteSignup error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
