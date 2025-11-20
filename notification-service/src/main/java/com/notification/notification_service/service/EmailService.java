@@ -24,7 +24,7 @@ public class EmailService {
                         "Organization ID: " + event.getOrgId() + "\n" +
                         "Role: " + event.getRole() + "\n\n" +
                         "Click the link below to accept the invitation:\n" +
-                        "https://yourapp.com/signup?token=" + event.getInviteToken() + "\n\n" +
+                        "http://localhost:5173/signup/invite?token=" + event.getInviteToken() + "\n\n" +
                         "Regards,\nYour SaaS Team"
         );
 
