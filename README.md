@@ -125,7 +125,7 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | Method | Endpoint                      | Description                           |
 |--------|-------------------------------|---------------------------------------|
 | GET    | `/member/invitation/validate` | Validate invitation token             |
-| POST   | `/meber/invitation/accept`    | Accept and add member to organization |
+| POST   | `/member/invitation/accept`   | Accept and add member to organization |
 
 
 
