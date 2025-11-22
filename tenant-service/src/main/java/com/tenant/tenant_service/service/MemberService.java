@@ -4,6 +4,7 @@ import com.tenant.tenant_service.dto.InvitatationAcceptRequest;
 import com.tenant.tenant_service.dto.MemberResponse;
 import com.tenant.tenant_service.dto.TokenValidateResponse;
 import com.tenant.tenant_service.dto.UpdateRoleRequest;
+import com.tenant.tenant_service.exception.BadRequestException;
 import com.tenant.tenant_service.exception.NotFoundException;
 import com.tenant.tenant_service.model.InvitationStatus;
 import com.tenant.tenant_service.model.OrganizationInvitation;
@@ -90,5 +91,17 @@ public class MemberService {
                 .toList();
         return membersResponse;
 
+    }
+
+    public String removeMember(String orgId, String authId) {
+        OrganizationMember organizationMember = memberRepo.findByOrgIdAndAuthId(orgId, authId);
+        if (organizationMember.getRole().equals(Role.OWNER)) {
+            throw new BadRequestException("Owner cannot be removed");
+        }
+        if(organizationMember == null) {
+            throw new NotFoundException("Member not found!");
+        }
+        memberRepo.delete(organizationMember);
+        return "Member removed successfully";
     }
 }

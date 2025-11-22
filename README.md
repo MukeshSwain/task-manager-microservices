@@ -127,6 +127,7 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | GET    | `/member/invitation/validate` | Validate invitation token             |
 | POST   | `/member/invitation/accept`   | Accept and add member to organization |
 | PUT    | `/member/{orgId}/update/role` | Update member role (authId in body)   |
+| GET    | `/member/{orgId}`             | Get all members of organization       |
 
 
 
