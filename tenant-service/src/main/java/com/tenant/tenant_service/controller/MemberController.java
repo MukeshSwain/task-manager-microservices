@@ -2,6 +2,8 @@ package com.tenant.tenant_service.controller;
 
 import com.tenant.tenant_service.dto.InvitatationAcceptRequest;
 import com.tenant.tenant_service.dto.TokenValidateResponse;
+import com.tenant.tenant_service.dto.UpdateRoleRequest;
+import com.tenant.tenant_service.model.Role;
 import com.tenant.tenant_service.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,5 +27,10 @@ public class MemberController {
     @PostMapping("/invitation/accept")
     public ResponseEntity<String> acceptInvitation(@RequestBody InvitatationAcceptRequest request){
         return ResponseEntity.ok(service.acceptInvitation(request));
+    }
+
+    @PutMapping("/{orgId}/update/role")
+    public ResponseEntity<String> updateRole(@PathVariable String orgId,@RequestBody UpdateRoleRequest request){
+        return ResponseEntity.ok(service.updateRole(orgId,request));
     }
 }

@@ -26,4 +26,6 @@ public class OrganizationController {
     public ResponseEntity<AddMemberResultResponse> addMember(@PathVariable String orgId, @RequestBody AddMemberRequest request){
         return ResponseEntity.ok(service.addMember(orgId,request));
     }
+
+
 }

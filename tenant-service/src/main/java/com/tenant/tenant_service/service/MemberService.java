@@ -2,16 +2,21 @@ package com.tenant.tenant_service.service;
 
 import com.tenant.tenant_service.dto.InvitatationAcceptRequest;
 import com.tenant.tenant_service.dto.TokenValidateResponse;
+import com.tenant.tenant_service.dto.UpdateRoleRequest;
+import com.tenant.tenant_service.exception.NotFoundException;
 import com.tenant.tenant_service.model.InvitationStatus;
 import com.tenant.tenant_service.model.OrganizationInvitation;
 import com.tenant.tenant_service.model.OrganizationMember;
+import com.tenant.tenant_service.model.Role;
 import com.tenant.tenant_service.repository.OrganizationInvitationRepo;
 import com.tenant.tenant_service.repository.OrganizationMemberRepo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 
 @Service
+@Slf4j
 public class MemberService {
     private final OrganizationInvitationRepo invitationRepo;
     private final OrganizationMemberRepo memberRepo;
@@ -57,6 +62,17 @@ public class MemberService {
                         .build();
         memberRepo.save(organizationMember);
         return "Invitation accepted successfully";
+
+    }
+
+    public String updateRole(String orgId, UpdateRoleRequest request) {
+        OrganizationMember organizationMember = memberRepo.findByOrgIdAndAuthId(orgId, request.getAuthId());
+        if(organizationMember == null){
+            throw new NotFoundException("Member not found!");
+        }
+        organizationMember.setRole(Role.valueOf(request.getRole().toUpperCase()));
+        memberRepo.save(organizationMember);
+        return "Role updated successfully";
 
     }
 }
