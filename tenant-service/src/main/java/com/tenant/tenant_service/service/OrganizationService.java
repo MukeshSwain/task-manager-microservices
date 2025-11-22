@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import static com.tenant.tenant_service.mapping.Mapping.toMemberResponse;
+import static com.tenant.tenant_service.mapping.Mapping.toOrganizationResponse;
+
 
 @Service
 public class OrganizationService {
@@ -135,28 +138,5 @@ public class OrganizationService {
         }
 
         return member.getRole();
-    }
-
-
-
-    private OrganizationResponse toOrganizationResponse(Organization org){
-        return OrganizationResponse.builder()
-                .id(org.getId())
-                .name(org.getName())
-                .ownerAuthId(org.getOwnerAuthId())
-                .domain(org.getDomain())
-                .createdAt(org.getCreatedAt())
-                .updatedAt(org.getUpdatedAt())
-                .build();
-    }
-
-    private MemberResponse toMemberResponse(OrganizationMember member){
-        return MemberResponse.builder()
-                .id(member.getId())
-                .authId(member.getAuthId())
-                .orgId(member.getOrgId())
-                .role(String.valueOf(member.getRole()))
-                .joinedAt(member.getJoinedAt())
-                .build();
     }
 }

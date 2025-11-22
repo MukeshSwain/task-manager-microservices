@@ -1,12 +1,16 @@
 package com.tenant.tenant_service.controller;
 
 import com.tenant.tenant_service.dto.InvitatationAcceptRequest;
+import com.tenant.tenant_service.dto.MemberResponse;
 import com.tenant.tenant_service.dto.TokenValidateResponse;
 import com.tenant.tenant_service.dto.UpdateRoleRequest;
+import com.tenant.tenant_service.model.OrganizationMember;
 import com.tenant.tenant_service.model.Role;
 import com.tenant.tenant_service.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173",
 allowCredentials = "true")
@@ -32,5 +36,10 @@ public class MemberController {
     @PutMapping("/{orgId}/update/role")
     public ResponseEntity<String> updateRole(@PathVariable String orgId,@RequestBody UpdateRoleRequest request){
         return ResponseEntity.ok(service.updateRole(orgId,request));
+    }
+
+    @GetMapping("/{orgId}")
+    public ResponseEntity<List<MemberResponse>> getMembers(@PathVariable String orgId){
+        return ResponseEntity.ok(service.getMembers(orgId));
     }
 }
