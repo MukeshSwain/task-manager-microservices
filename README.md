@@ -107,9 +107,14 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 |--------|------------------------------|-------------------------------|
 | POST   | `/user`                      | Create a new user             |
 | POST   | `/user/:authId/upload-image` | Upload profile picture        |
+| PUT    | `/user/:authId`              | Update user profile           |
 | GET    | `/user/:authId`              | Get user profile details      |
 | GET    | `/user/all`                  | Get all users profile details |
 | GET    | `/user/lookup`               | Lookup user by email          |
+| GET    | `/user/email/:authId`        | Get email by authId           |
+
+
+  
 
 
 ### 📦 Tenant Service (Spring Boot + PostgresSQL)
@@ -122,12 +127,14 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 
 **Base URL: `/member`**
 
-| Method | Endpoint                      | Description                           |
-|--------|-------------------------------|---------------------------------------|
-| GET    | `/member/invitation/validate` | Validate invitation token             |
-| POST   | `/member/invitation/accept`   | Accept and add member to organization |
-| PUT    | `/member/{orgId}/update/role` | Update member role (authId in body)   |
-| GET    | `/member/{orgId}`             | Get all members of organization       |
+| Method | Endpoint                          | Description                           |
+|--------|-----------------------------------|---------------------------------------|
+| GET    | `/member/invitation/validate`     | Validate invitation token             |
+| POST   | `/member/invitation/accept`       | Accept and add member to organization |
+| PUT    | `/member/{orgId}/update/role`     | Update member role (authId in body)   |
+| GET    | `/member/{orgId}`                 | Get all members of organization       |
+| DELETE | `/member/{orgId}/remove/{authId}` | Remove member from organization       |
+
 
 
 
