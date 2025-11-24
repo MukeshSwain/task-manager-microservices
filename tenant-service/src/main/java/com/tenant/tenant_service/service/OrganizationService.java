@@ -1,7 +1,9 @@
 package com.tenant.tenant_service.service;
 
+import com.tenant.tenant_service.config.RabbitConfig;
 import com.tenant.tenant_service.dto.*;
 import com.tenant.tenant_service.exception.BadRequestException;
+import com.tenant.tenant_service.exception.NotFoundException;
 import com.tenant.tenant_service.messaging.NotificationProducer;
 import com.tenant.tenant_service.model.*;
 import com.tenant.tenant_service.repository.OrganizationInvitationRepo;
@@ -93,7 +95,7 @@ public class OrganizationService {
                     .role(request.getRole())
                     .inviteToken(token)
                     .orgId(orgId)
-                    .type("Invited")
+                    .type(NotificationEventType.INVITATION_SENT)
                     .build());
             return AddMemberResultResponse.builder()
                     .status("INVITATION_SENT")
@@ -104,9 +106,7 @@ public class OrganizationService {
 
         }
         String authId = userResponse.authId;
-        System.out.println("AuthId : "+authId);
         OrganizationMember existMember = memberRepo.findByOrgIdAndAuthId(orgId, authId);
-        System.out.println("ExistMember : "+existMember);
         if(existMember != null){
             throw new BadRequestException("User is already member of organization");
         }
@@ -118,8 +118,13 @@ public class OrganizationService {
                 .build();
 
         OrganizationMember savedMember = memberRepo.save(newMember);
+        String orgName = getOrgNameById(existOrg.getId());
 
-
+        notificationProducer.send(EmailEvent.builder()
+                .email(request.getEmail())
+                        .subject("You have been added to an organization")
+                        .message("You have been added to an organization " + orgName + " as " + request.getRole() + " by ")
+                .build(), RabbitConfig.MEMBER_ADDED_KEY);
         return AddMemberResultResponse.builder()
                 .status("MEMBER_ADDED")
                 .member(toMemberResponse(savedMember))
@@ -138,5 +143,12 @@ public class OrganizationService {
         }
 
         return member.getRole();
+    }
+    public String getOrgNameById(String orgId){
+        Organization organization = organizationRepo.findById(orgId).orElse(null);
+        if(organization == null){
+            throw new NotFoundException("Organization not found");
+        }
+        return organization.getName();
     }
 }

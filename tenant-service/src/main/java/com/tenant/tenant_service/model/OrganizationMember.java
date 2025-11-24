@@ -19,7 +19,7 @@ public class OrganizationMember {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-
+    private String name;
     @Column(name = "org_id", nullable = false)
     private String orgId;
 

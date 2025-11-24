@@ -1,11 +1,10 @@
 package com.tenant.tenant_service.service;
 
-import com.tenant.tenant_service.dto.InvitatationAcceptRequest;
-import com.tenant.tenant_service.dto.MemberResponse;
-import com.tenant.tenant_service.dto.TokenValidateResponse;
-import com.tenant.tenant_service.dto.UpdateRoleRequest;
+import com.tenant.tenant_service.config.RabbitConfig;
+import com.tenant.tenant_service.dto.*;
 import com.tenant.tenant_service.exception.BadRequestException;
 import com.tenant.tenant_service.exception.NotFoundException;
+import com.tenant.tenant_service.messaging.NotificationProducer;
 import com.tenant.tenant_service.model.InvitationStatus;
 import com.tenant.tenant_service.model.OrganizationInvitation;
 import com.tenant.tenant_service.model.OrganizationMember;
@@ -25,10 +24,16 @@ import java.util.List;
 public class MemberService {
     private final OrganizationInvitationRepo invitationRepo;
     private final OrganizationMemberRepo memberRepo;
+    private final UserService userService;
+    private final NotificationProducer notificationProducer;
+    private final OrganizationService organizationService;
 
-    public MemberService(OrganizationInvitationRepo invitationRepo, OrganizationMemberRepo memberRepo) {
+    public MemberService(OrganizationInvitationRepo invitationRepo, OrganizationMemberRepo memberRepo, UserService userService, NotificationProducer notificationProducer, OrganizationService organizationService) {
         this.invitationRepo = invitationRepo;
         this.memberRepo = memberRepo;
+        this.userService = userService;
+        this.notificationProducer = notificationProducer;
+        this.organizationService = organizationService;
     }
 
     public TokenValidateResponse validateToken(String token){
@@ -65,7 +70,13 @@ public class MemberService {
                         .authId(request.getAuthId())
                         .joinedAt(OffsetDateTime.now())
                         .build();
+        String orgName = organizationService.getOrgNameById(organizationMember.getOrgId());
         memberRepo.save(organizationMember);
+        notificationProducer.send(EmailEvent.builder()
+                .email(organizationInvitation.getEmail())
+                .subject("You have been added to an organization")
+                .message("You have been added to an organization " + orgName + " as " + organizationInvitation.getRole())
+                .build(), RabbitConfig.MEMBER_ADDED_KEY);
         return "Invitation accepted successfully";
 
     }
@@ -76,6 +87,13 @@ public class MemberService {
             throw new NotFoundException("Member not found!");
         }
         organizationMember.setRole(Role.valueOf(request.getRole().toUpperCase()));
+        String orgName = organizationService.getOrgNameById(orgId);
+        notificationProducer.send(EmailEvent.builder()
+                .email(userService.getEmailById(request.getAuthId()))
+                        .subject("Your role has been updated")
+                        .message("Your role has been updated to " + request.getRole()+" in "+orgName)
+                .build(),
+                RabbitConfig.ROLE_UPDATED_KEY);
         memberRepo.save(organizationMember);
         return "Role updated successfully";
 
@@ -98,9 +116,17 @@ public class MemberService {
         if (organizationMember.getRole().equals(Role.OWNER)) {
             throw new BadRequestException("Owner cannot be removed");
         }
+
         if(organizationMember == null) {
             throw new NotFoundException("Member not found!");
         }
+        String email = userService.getEmailById(authId);
+        String orgName = organizationService.getOrgNameById(organizationMember.getOrgId());
+        notificationProducer.send(EmailEvent.builder()
+                .email(email)
+                        .subject("You were removed from the organization")
+                        .message("You are no longer a member of "+orgName)
+                .build(), RabbitConfig.MEMBER_REMOVED_KEY);
         memberRepo.delete(organizationMember);
         return "Member removed successfully";
     }

@@ -15,5 +15,9 @@ public class UserService {
     public UserLookupResponse lookupUserByEmail(String email) {
         return userClient.lookupByEmail(email);
     }
+
+    public String getEmailById(String authId){
+        return userClient.getEmailById(authId);
+    }
 }
 

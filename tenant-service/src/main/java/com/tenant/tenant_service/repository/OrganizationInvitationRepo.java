@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OrganizationInvitationRepo extends JpaRepository<OrganizationInvitation,String> {
     OrganizationInvitation findByToken(String token);
+
+    void deleteByToken(String token);
 }

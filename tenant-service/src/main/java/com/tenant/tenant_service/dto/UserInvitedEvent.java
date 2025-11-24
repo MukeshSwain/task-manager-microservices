@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Builder
 public class UserInvitedEvent {
-    private String type;            // "USER_INVITED"
+    private NotificationEventType type;            // "USER_INVITED"
     private String email;
     private String orgId;
     private Role role;              // OWNER / ADMIN / MEMBER

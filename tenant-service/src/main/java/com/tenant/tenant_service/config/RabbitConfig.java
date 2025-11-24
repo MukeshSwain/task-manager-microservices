@@ -9,8 +9,14 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfig {
+
     public static final String EXCHANGE = "events.exchange";
-    public static final String ROUTING_KEY = "email.invite";
+
+    // Routing keys for all email events
+    public static final String INVITE_KEY = "email.invite";
+    public static final String MEMBER_ADDED_KEY = "email.member.added";
+    public static final String ROLE_UPDATED_KEY = "email.member.role.updated";
+    public static final String MEMBER_REMOVED_KEY = "email.member.removed";
 
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {
@@ -25,3 +31,4 @@ public class RabbitConfig {
         return rabbitTemplate;
     }
 }
+
