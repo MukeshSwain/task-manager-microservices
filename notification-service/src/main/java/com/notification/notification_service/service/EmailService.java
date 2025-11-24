@@ -1,5 +1,6 @@
 package com.notification.notification_service.service;
 
+import com.notification.notification_service.dto.EmailEvent;
 import com.notification.notification_service.dto.UserInvitedEvent;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -30,5 +31,29 @@ public class EmailService {
 
         javaMailSender.send(msg);
 
+    }
+
+    public void sendMemberRemovedEmail(EmailEvent event) {
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(event.getEmail());
+        msg.setSubject(event.getSubject());
+        msg.setText(event.getMessage());
+        javaMailSender.send(msg);
+    }
+
+    public void sendRoleUpdatedEmail(EmailEvent event) {
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(event.getEmail());
+        msg.setSubject(event.getSubject());
+        msg.setText(event.getMessage());
+        javaMailSender.send(msg);
+    }
+
+    public void sendMemberAdded(EmailEvent event){
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(event.getEmail());
+        msg.setSubject(event.getSubject());
+        msg.setText(event.getMessage());
+        javaMailSender.send(msg);
     }
 }
