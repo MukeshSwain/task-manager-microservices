@@ -52,4 +52,8 @@ public class UserController {
     public ResponseEntity<UserLookupResponse> lookupByEmail(@RequestParam String email){
         return ResponseEntity.ok(userService.lookupByEmail(email));
     }
+    @GetMapping("/email/{authId}")
+    public ResponseEntity<String> getEmailById(@PathVariable String authId){
+        return ResponseEntity.ok(userService.getEmailById(authId));
+    }
 }

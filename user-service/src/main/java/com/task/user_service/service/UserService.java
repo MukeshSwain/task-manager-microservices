@@ -121,6 +121,17 @@ public class UserService {
         if(user == null){
             return UserLookupResponse.builder().exists(false).authId(null).build();
         }
-        return UserLookupResponse.builder().exists(true).authId(user.getAuthId()).build();
+        return UserLookupResponse.builder()
+                .exists(true)
+                .authId(user.getAuthId())
+                .build();
+    }
+
+    public String getEmailById(String authId) {
+        UserProfile user = userRepository.findByAuthId(authId);
+        if(user == null){
+            throw new RuntimeException("User not found");
+        }
+        return user.getEmail();
     }
 }
