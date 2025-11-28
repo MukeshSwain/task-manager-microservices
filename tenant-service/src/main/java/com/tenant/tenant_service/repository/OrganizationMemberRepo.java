@@ -13,4 +13,6 @@ public interface OrganizationMemberRepo extends JpaRepository<OrganizationMember
     List<OrganizationMember> findByOrgId(String orgId);
 
     OrganizationMember findByAuthId(String authId);
+
+    List<OrganizationMember> findAllByAuthId(String authId);
 }

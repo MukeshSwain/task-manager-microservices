@@ -1,6 +1,7 @@
 package com.tenant.tenant_service.service;
 
 import com.tenant.tenant_service.client.UserClient;
+import com.tenant.tenant_service.dto.EmailAndName;
 import com.tenant.tenant_service.dto.UserLookupResponse;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +17,7 @@ public class UserService {
         return userClient.lookupByEmail(email);
     }
 
-    public String getEmailById(String authId){
+    public EmailAndName getEmailById(String authId){
         return userClient.getEmailById(authId);
     }
 }

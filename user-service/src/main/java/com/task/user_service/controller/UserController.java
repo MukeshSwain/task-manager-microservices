@@ -1,9 +1,6 @@
 package com.task.user_service.controller;
 
-import com.task.user_service.dto.UserLookupResponse;
-import com.task.user_service.dto.UserProfileUpdateRequest;
-import com.task.user_service.dto.UserRequest;
-import com.task.user_service.dto.UserResponse;
+import com.task.user_service.dto.*;
 import com.task.user_service.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +50,7 @@ public class UserController {
         return ResponseEntity.ok(userService.lookupByEmail(email));
     }
     @GetMapping("/email/{authId}")
-    public ResponseEntity<String> getEmailById(@PathVariable String authId){
+    public ResponseEntity<EmailAndName> getEmailById(@PathVariable String authId){
         return ResponseEntity.ok(userService.getEmailById(authId));
     }
 }

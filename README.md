@@ -120,10 +120,12 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 ### 📦 Tenant Service (Spring Boot + PostgresSQL)
 **Base URL: `/tenant`**
 
-| Method | Endpoint             | Description                      |
-|--------|----------------------|----------------------------------|
-| POST   | `/tenant`            | Create a new tenant/organization |
-| POST   | `/tenant/:orgId/add` | Add member to organization       |
+| Method | Endpoint             | Description                                               |
+|--------|----------------------|-----------------------------------------------------------|
+| POST   | `/tenant`            | Create a new tenant/organization                          |
+| POST   | `/tenant/:orgId/add` | Add member to organization                                |
+| GET    | `/tenant/me`         | Get all organizations of user(authId provided in request) |
+
 
 **Base URL: `/member`**
 

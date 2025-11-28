@@ -7,6 +7,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+@CrossOrigin(
+        origins = "http://localhost:5173",
+        allowCredentials = "true"
+)
 @RestController
 @RequestMapping("/api/organizations")
 public class OrganizationController {
@@ -27,5 +33,9 @@ public class OrganizationController {
         return ResponseEntity.ok(service.addMember(orgId,request));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<List<RoleAndorgId>> getMyOrganizations(@RequestParam String authId){
+        return ResponseEntity.ok(service.getMyOrganizations(authId));
+    }
 
 }

@@ -1,11 +1,8 @@
 package com.task.user_service.service;
 
-import com.task.user_service.dto.UserLookupResponse;
-import com.task.user_service.dto.UserProfileUpdateRequest;
-import com.task.user_service.dto.UserResponse;
+import com.task.user_service.dto.*;
 import com.task.user_service.model.Role;
 import com.task.user_service.model.UserProfile;
-import com.task.user_service.dto.UserRequest;
 import com.task.user_service.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -127,11 +124,14 @@ public class UserService {
                 .build();
     }
 
-    public String getEmailById(String authId) {
+    public EmailAndName getEmailById(String authId) {
         UserProfile user = userRepository.findByAuthId(authId);
         if(user == null){
             throw new RuntimeException("User not found");
         }
-        return user.getEmail();
+        return EmailAndName.builder()
+                .email(user.getEmail())
+                .name(user.getName())
+                .build();
     }
 }

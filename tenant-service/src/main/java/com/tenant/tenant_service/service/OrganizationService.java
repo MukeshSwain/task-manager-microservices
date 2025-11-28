@@ -12,6 +12,9 @@ import com.tenant.tenant_service.repository.OrganizationRepo;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.tenant.tenant_service.mapping.Mapping.toMemberResponse;
@@ -151,4 +154,29 @@ public class OrganizationService {
         }
         return organization.getName();
     }
+
+    public List<RoleAndorgId> getMyOrganizations(String authId) {
+
+        // 1) Fetch all organizations the user belongs to
+        List<OrganizationMember> members = memberRepo.findAllByAuthId(authId);
+
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return members.stream()
+                .map(member -> {
+                    // 2) Fetch organization by orgId
+                    Optional<Organization> org = organizationRepo.findById(member.getOrgId());
+
+                    return RoleAndorgId.builder()
+                            .orgId(member.getOrgId())
+                            .role(member.getRole().name())
+                            .orgName(org.get().getName())   // <-- key fix
+                            .joinedAt(member.getJoinedAt().toLocalDateTime())
+                            .build();
+                })
+                .toList();
+    }
+
 }

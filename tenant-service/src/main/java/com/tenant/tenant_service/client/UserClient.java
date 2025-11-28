@@ -1,5 +1,6 @@
 package com.tenant.tenant_service.client;
 
+import com.tenant.tenant_service.dto.EmailAndName;
 import com.tenant.tenant_service.dto.UserLookupResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,5 +13,5 @@ public interface UserClient {
     public UserLookupResponse lookupByEmail(@RequestParam String email);
 
     @GetMapping("/email/{authId}")
-    String getEmailById(@PathVariable String authId);
+    EmailAndName getEmailById(@PathVariable String authId);
 }

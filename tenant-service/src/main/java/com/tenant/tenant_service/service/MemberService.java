@@ -89,7 +89,7 @@ public class MemberService {
         organizationMember.setRole(Role.valueOf(request.getRole().toUpperCase()));
         String orgName = organizationService.getOrgNameById(orgId);
         notificationProducer.send(EmailEvent.builder()
-                .email(userService.getEmailById(request.getAuthId()))
+                .email(userService.getEmailById(request.getAuthId()).getEmail())
                         .subject("Your role has been updated")
                         .message("Your role has been updated to " + request.getRole()+" in "+orgName)
                 .build(),
@@ -101,15 +101,29 @@ public class MemberService {
 
     public List<MemberResponse> getMembers(String orgId) {
         List<OrganizationMember> membersList = memberRepo.findByOrgId(orgId);
-        if(membersList.isEmpty()){
+
+        if (membersList.isEmpty()) {
             throw new NotFoundException("Members not found!");
         }
-        List<MemberResponse> membersResponse = membersList.stream()
-                .map((member)->toMemberResponse(member))
-                .toList();
-        return membersResponse;
 
+        return membersList.stream()
+                .map(member -> {
+                    // Call user service to get user info
+                    EmailAndName user = userService.getEmailById(member.getAuthId());
+
+                    return MemberResponse.builder()
+                            .id(member.getId())
+                            .orgId(member.getOrgId())
+                            .authId(member.getAuthId())
+                            .email(user.getEmail())    // from user service
+                            .name(user.getName())      // from user service
+                            .role(member.getRole().name())  // from member table
+                            .joinedAt(member.getJoinedAt())
+                            .build();
+                })
+                .toList();
     }
+
 
     public String removeMember(String orgId, String authId) {
         OrganizationMember organizationMember = memberRepo.findByOrgIdAndAuthId(orgId, authId);
@@ -120,7 +134,7 @@ public class MemberService {
         if(organizationMember == null) {
             throw new NotFoundException("Member not found!");
         }
-        String email = userService.getEmailById(authId);
+        String email = userService.getEmailById(authId).getEmail();
         String orgName = organizationService.getOrgNameById(organizationMember.getOrgId());
         notificationProducer.send(EmailEvent.builder()
                 .email(email)
