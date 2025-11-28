@@ -82,7 +82,7 @@ public class OrganizationService {
         if (!userResponse.exists){
             String token = UUID.randomUUID().toString().replace("-", "");
             OrganizationInvitation organizationInvitation = OrganizationInvitation.builder()
-                    .org_id(orgId)
+                    .orgId(orgId)
                     .email(request.getEmail())
                     .role(request.getRole())
                     .token(token)

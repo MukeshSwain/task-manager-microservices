@@ -20,7 +20,7 @@ public class OrganizationInvitation {
     private String id;
 
     private String orgName;
-    private String org_id;
+    private String orgId;
     @Column(nullable = false)
     private String email;
     @Enumerated(EnumType.STRING)

@@ -43,7 +43,7 @@ public class MemberService {
                     .valid(true)
                     .email(organizationInvitation.getEmail())
                     .role(organizationInvitation.getRole())
-                    .orgId(organizationInvitation.getOrg_id())
+                    .orgId(organizationInvitation.getOrgId())
                     .orgName(organizationInvitation.getOrgName())
                     .build();
         }
@@ -65,7 +65,7 @@ public class MemberService {
 
         //then add member in member table
         OrganizationMember organizationMember = OrganizationMember.builder()
-                        .orgId(organizationInvitation.getOrg_id())
+                        .orgId(organizationInvitation.getOrgId())
                         .role(organizationInvitation.getRole())
                         .authId(request.getAuthId())
                         .joinedAt(OffsetDateTime.now())
