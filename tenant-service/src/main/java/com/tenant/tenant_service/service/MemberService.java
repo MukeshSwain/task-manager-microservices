@@ -38,19 +38,23 @@ public class MemberService {
 
     public TokenValidateResponse validateToken(String token){
         OrganizationInvitation organizationInvitation = invitationRepo.findByToken(token);
-        if (organizationInvitation != null){
-            return TokenValidateResponse.builder()
-                    .valid(true)
-                    .email(organizationInvitation.getEmail())
-                    .role(organizationInvitation.getRole())
-                    .orgId(organizationInvitation.getOrgId())
-                    .orgName(organizationInvitation.getOrgName())
-                    .build();
+        if (organizationInvitation == null)
+        {
+            throw new BadRequestException("Invalid invitation");
         }
-
+        if (organizationInvitation.getStatus() != InvitationStatus.PENDING)
+        {
+            throw new BadRequestException("Invalid token");
+        }
         return TokenValidateResponse.builder()
-                .valid(false)
+                .valid(true)
+                .email(organizationInvitation.getEmail())
+                .role(organizationInvitation.getRole())
+                .orgId(organizationInvitation.getOrgId())
+                .orgName(organizationInvitation.getOrgName())
                 .build();
+
+
     }
 
     public String acceptInvitation(InvitatationAcceptRequest request){

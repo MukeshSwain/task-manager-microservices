@@ -3,6 +3,7 @@ package com.tenant.tenant_service.service;
 import com.tenant.tenant_service.dto.EmailAndName;
 import com.tenant.tenant_service.dto.PendingInvitationResponse;
 import com.tenant.tenant_service.dto.RoleAndorgId;
+import com.tenant.tenant_service.exception.NotFoundException;
 import com.tenant.tenant_service.model.InvitationStatus;
 import com.tenant.tenant_service.model.OrganizationInvitation;
 import com.tenant.tenant_service.repository.OrganizationInvitationRepo;
@@ -36,6 +37,15 @@ public class InvitationService {
                             .build();
                 })
                 .toList();
+    }
+    public String cancelInvitation(String orgId, String email){
+        OrganizationInvitation invitation = invitationRepo.findByOrgIdAndEmail(orgId,email);
+        if(invitation == null){
+            throw new NotFoundException("Invitation not found!");
+        }
+        invitation.setStatus(InvitationStatus.CANCELLED);
+        invitationRepo.save(invitation);
+        return "Invitation cancelled successfully";
     }
 
 }
