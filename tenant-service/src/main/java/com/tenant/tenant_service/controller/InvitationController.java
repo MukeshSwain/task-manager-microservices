@@ -22,4 +22,9 @@ public class InvitationController {
     public List<PendingInvitationResponse> getPendingInvitations(@PathVariable String orgId){
         return service.getInvitationByOrgId(orgId);
     }
+
+    @PutMapping("/{orgId}/{email}")
+    public String cancelInvitation(@PathVariable String orgId, @PathVariable String email){
+        return service.cancelInvitation(orgId, email);
+    }
 }

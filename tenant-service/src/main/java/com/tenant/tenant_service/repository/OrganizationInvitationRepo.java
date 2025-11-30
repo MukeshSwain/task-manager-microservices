@@ -11,4 +11,6 @@ public interface OrganizationInvitationRepo extends JpaRepository<OrganizationIn
 
     void deleteByToken(String token);
     List<OrganizationInvitation> findAllByOrgIdAndStatus(String orgId, InvitationStatus invitationStatus);
+
+    OrganizationInvitation findByOrgIdAndEmail(String orgId, String email);
 }
