@@ -86,6 +86,9 @@ public class MemberService {
         if(organizationMember == null){
             throw new NotFoundException("Member not found!");
         }
+        if(organizationMember.getRole().equals(Role.OWNER)){
+            throw new BadRequestException("Owner cannot be updated");
+        }
         organizationMember.setRole(Role.valueOf(request.getRole().toUpperCase()));
         String orgName = organizationService.getOrgNameById(orgId);
         notificationProducer.send(EmailEvent.builder()

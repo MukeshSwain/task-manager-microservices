@@ -32,6 +32,7 @@ public class InvitationService {
                             .role(invitation.getRole().name())
                             .email(invitation.getEmail())
                             .status(invitation.getStatus().name())
+                            .invitedAt(invitation.getInvitedAt())
                             .build();
                 })
                 .toList();

@@ -2,6 +2,8 @@ package com.tenant.tenant_service.dto;
 
 import lombok.*;
 
+import java.time.OffsetDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -12,4 +14,5 @@ public class PendingInvitationResponse {
     private String email;
     private String role;
     private String status;
+    private OffsetDateTime invitedAt;
 }

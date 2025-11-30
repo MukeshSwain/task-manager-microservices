@@ -35,6 +35,7 @@ public class MemberController {
 
     @PutMapping("/{orgId}/update/role")
     public ResponseEntity<String> updateRole(@PathVariable String orgId,@RequestBody UpdateRoleRequest request){
+        System.out.println("jnfjnerjgne : "+orgId);
         return ResponseEntity.ok(service.updateRole(orgId,request));
     }
 
