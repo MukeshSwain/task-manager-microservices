@@ -142,6 +142,8 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | Method | Endpoint                      | Description                                 |
 |--------|-------------------------------|---------------------------------------------|
 | GET    | `/invitation/{orgId}/pending` | Get all pending invitations of organization |
+| PUT    | `/invitation/{orgId}/{email}` | Cancel invitation                           |
+
 
 
 
