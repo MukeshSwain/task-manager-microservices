@@ -157,7 +157,6 @@ public class OrganizationService {
 
     public List<RoleAndorgId> getMyOrganizations(String authId) {
 
-        // 1) Fetch all organizations the user belongs to
         List<OrganizationMember> members = memberRepo.findAllByAuthId(authId);
 
         if (members == null || members.isEmpty()) {
@@ -166,17 +165,20 @@ public class OrganizationService {
 
         return members.stream()
                 .map(member -> {
-                    // 2) Fetch organization by orgId
-                    Optional<Organization> org = organizationRepo.findById(member.getOrgId());
+                    Organization org = organizationRepo.findById(member.getOrgId())
+                            .orElseThrow(() -> new RuntimeException(
+                                    "Organization not found with id: " + member.getOrgId()
+                            ));
 
                     return RoleAndorgId.builder()
                             .orgId(member.getOrgId())
                             .role(member.getRole().name())
-                            .orgName(org.get().getName())   // <-- key fix
+                            .orgName(org.getName())
                             .joinedAt(member.getJoinedAt().toLocalDateTime())
                             .build();
                 })
                 .toList();
     }
+
 
 }
