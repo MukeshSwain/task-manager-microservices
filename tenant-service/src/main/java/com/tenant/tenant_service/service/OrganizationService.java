@@ -12,10 +12,7 @@ import com.tenant.tenant_service.repository.OrganizationRepo;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.tenant.tenant_service.mapping.Mapping.toMemberResponse;
 import static com.tenant.tenant_service.mapping.Mapping.toOrganizationResponse;
@@ -165,10 +162,14 @@ public class OrganizationService {
 
         return members.stream()
                 .map(member -> {
-                    Organization org = organizationRepo.findById(member.getOrgId())
-                            .orElseThrow(() -> new RuntimeException(
-                                    "Organization not found with id: " + member.getOrgId()
-                            ));
+                    Optional<Organization> orgOpt = organizationRepo.findById(member.getOrgId());
+
+                    if (orgOpt.isEmpty()) {
+                        // Skip invalid or deleted organizations instead of throwing
+                        return null;
+                    }
+
+                    Organization org = orgOpt.get();
 
                     return RoleAndorgId.builder()
                             .orgId(member.getOrgId())
@@ -177,8 +178,10 @@ public class OrganizationService {
                             .joinedAt(member.getJoinedAt().toLocalDateTime())
                             .build();
                 })
+                .filter(Objects::nonNull)  // remove skipped items
                 .toList();
     }
+
 
 
 }
