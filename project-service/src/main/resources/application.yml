@@ -1,0 +1,19 @@
+server:
+  port: 8084
+
+spring:
+  application:
+   name: project-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/projectdb
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        formate_sql: true
+
+
