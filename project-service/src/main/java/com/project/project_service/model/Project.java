@@ -41,6 +41,7 @@ public class Project {
     @UpdateTimestamp
     private OffsetDateTime updatedAt;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private Boolean deleted = false;
 

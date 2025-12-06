@@ -17,3 +17,7 @@ spring:
         formate_sql: true
 
 
+logging:
+  level:
+    root: INFO
+    com.project: DEBUG
