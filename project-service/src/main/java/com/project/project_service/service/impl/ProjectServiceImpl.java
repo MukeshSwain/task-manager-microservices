@@ -93,8 +93,20 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public ProjectResponse updateProject(String projectId, CreateProjectRequest req) {
-        return null;
+        Project project = projectRepository.findByIdAndDeletedFalse(projectId);
+        if(project == null){
+            throw new NotFoundException("Project not found");
+        }
+        if(req.getName() != null && !req.getName().isBlank()){
+            project.setName(req.getName());
+        }
+        if(req.getDescription() != null && !req.getDescription().isBlank()){
+            project.setDescription(req.getDescription());
+        }
+        Project savedProject = projectRepository.saveAndFlush(project);
+        return Mapping.toProjectResponse(savedProject);
     }
 
     @Override

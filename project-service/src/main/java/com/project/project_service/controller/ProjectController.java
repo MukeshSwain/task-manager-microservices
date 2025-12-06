@@ -35,5 +35,10 @@ public class ProjectController {
     public ResponseEntity<List<ProjectResponse>> listByUser(@PathVariable String authId){
         return ResponseEntity.ok(projectService.listByUser(authId));
     }
+    @PutMapping("/{projectId}")
+    public ResponseEntity<ProjectResponse> updateProject(@PathVariable String projectId, @RequestBody CreateProjectRequest req){
+        return ResponseEntity.ok(projectService.updateProject(projectId, req));
+    }
+
 
 }
