@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -68,7 +69,11 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectResponse getProject(String projectId) {
-        return null;
+        Project project = projectRepository.findByIdAndDeletedFalse(projectId);
+        if (project == null){
+            throw new NotFoundException("Project not found");
+        }
+        return Mapping.toProjectResponse(project);
     }
 
     @Override
