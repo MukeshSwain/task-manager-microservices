@@ -78,7 +78,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<ProjectResponse> listByOrg(String orgId) {
-        return List.of();
+        List<Project> projects= projectRepository.findAllByOrgIdAndDeletedFalse(orgId);
+        return projects.stream()
+                .map(project -> Mapping.toProjectResponse(project)).toList();
     }
 
     @Override

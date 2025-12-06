@@ -5,7 +5,11 @@ import com.project.project_service.dto.CreateProjectRequest;
 import com.project.project_service.dto.ProjectResponse;
 import com.project.project_service.service.ProjectService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -16,11 +20,17 @@ public class ProjectController {
         this.projectService = projectService;
     }
     @PostMapping
-    public ProjectResponse createProject(@Valid @RequestBody CreateProjectRequest projectRequest){
-        return projectService.createProject(projectRequest);
+    public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody CreateProjectRequest projectRequest){
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.createProject(projectRequest));
     }
     @GetMapping("/{projectId}")
-    public ProjectResponse getProject(@PathVariable String projectId){
-        return projectService.getProject(projectId);
+    public ResponseEntity<ProjectResponse> getProject(@PathVariable String projectId){
+        return ResponseEntity.ok(projectService.getProject(projectId));
     }
+    @GetMapping("/org/{orgId}")
+    public ResponseEntity<List<ProjectResponse>> listByOrg(@PathVariable String orgId){
+        return ResponseEntity.ok(projectService.listByOrg(orgId));
+    }
+
+
 }
