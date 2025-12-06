@@ -85,7 +85,11 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<ProjectResponse> listByUser(String authId) {
-        return List.of();
+        List<ProjectMember> memberShips = memberRepository.findByAuthId(authId);
+        List<ProjectResponse> projects = memberShips.stream()
+                .map(member -> Mapping.toProjectResponse(projectRepository.findByIdAndDeletedFalse(member.getProjectId()))).toList();
+
+        return projects;
     }
 
     @Override

@@ -31,6 +31,9 @@ public class ProjectController {
     public ResponseEntity<List<ProjectResponse>> listByOrg(@PathVariable String orgId){
         return ResponseEntity.ok(projectService.listByOrg(orgId));
     }
-
+    @GetMapping("/user/{authId}")
+    public ResponseEntity<List<ProjectResponse>> listByUser(@PathVariable String authId){
+        return ResponseEntity.ok(projectService.listByUser(authId));
+    }
 
 }
