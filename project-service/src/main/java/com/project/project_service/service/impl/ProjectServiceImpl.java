@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,7 +111,14 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public void softDeleteProject(String projectId) {
-
+    Project project = projectRepository.findByIdAndDeletedFalse(projectId);
+    if(project == null){
+        throw new NotFoundException("Project not found");
+    }
+    project.setDeleted(true);
+    project.setDeletedAt(OffsetDateTime.now());
+    projectRepository.saveAndFlush(project);
     }
 }

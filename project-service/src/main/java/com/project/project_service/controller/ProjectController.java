@@ -39,6 +39,11 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable String projectId, @RequestBody CreateProjectRequest req){
         return ResponseEntity.ok(projectService.updateProject(projectId, req));
     }
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(@PathVariable String projectId){
+        projectService.softDeleteProject(projectId);
+        return ResponseEntity.ok().build();
+    }
 
 
 }
