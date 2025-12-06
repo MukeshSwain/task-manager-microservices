@@ -48,4 +48,8 @@ public class MemberController {
     public ResponseEntity<String> removeMember(@PathVariable String orgId, @PathVariable String authId){
         return ResponseEntity.ok(service.removeMember(orgId, authId));
     }
+    @GetMapping("/{orgId}/{authId}/get")
+    public ResponseEntity<MemberResponse> getMember(@PathVariable String orgId, @PathVariable String authId){
+        return ResponseEntity.ok(service.getMember(orgId, authId));
+    }
 }

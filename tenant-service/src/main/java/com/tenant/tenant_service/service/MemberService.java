@@ -151,4 +151,12 @@ public class MemberService {
         memberRepo.delete(organizationMember);
         return "Member removed successfully";
     }
+
+    public MemberResponse getMember(String orgId, String authId) {
+        OrganizationMember member = memberRepo.findByOrgIdAndAuthId(orgId, authId);
+        if(member == null){
+            throw new NotFoundException("Member not found");
+        }
+        return toMemberResponse(member);
+    }
 }
