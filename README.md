@@ -9,8 +9,9 @@ and modern backend engineering practices.
 - **User Service** (Spring Boot + MongoDB)
 - **Tenant Service** (Spring Boot + PostgresSQL)
 - **Notification Service** (Spring Boot + RabbitMQ)
+- **Project Service** (Spring Boot + PostgresSQL)
 
-Additional services (Task, Project, Billing, Notification, Gateway, etc.) will be added as the system evolves.
+Additional services (Task, Billing, Notification, Gateway, etc.) will be added as the system evolves.
 # 🚀 Architecture Overview
 ## 🏗️ Microservices Design
 
@@ -24,6 +25,7 @@ Additional services (Task, Project, Billing, Notification, Gateway, etc.) will b
 - **user-service**
 - **tenant-service**
 - **notification-service**
+- **project-service**
 
 # Tech Stack
 - **Auth Service**
@@ -43,6 +45,10 @@ Additional services (Task, Project, Billing, Notification, Gateway, etc.) will b
   - Spring Boot
   - Java
   - RabbitMQ
+- **Project Service**
+  - Spring Boot
+  - Java
+  - Postgresql
 
 # Services Summary
 - **Auth Service**
@@ -57,6 +63,8 @@ Additional services (Task, Project, Billing, Notification, Gateway, etc.) will b
   - Managing tenant-level metadata
 - **Notification Service**
   - Sending emails
+- **Project Service**
+  - Managing project related operations
   
 
 ## Run Locally
@@ -82,6 +90,12 @@ Additional services (Task, Project, Billing, Notification, Gateway, etc.) will b
 ### Notification Service
 ```bash
   cd notification-service
+  ./mvnw spring-boot:run
+```
+
+## Project Service
+```bash
+  cd project-service
   ./mvnw spring-boot:run
 ```
 # API Documentation / Endpoints
@@ -136,6 +150,8 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | PUT    | `/member/{orgId}/update/role`     | Update member role (authId in body)   |
 | GET    | `/member/{orgId}`                 | Get all members of organization       |
 | DELETE | `/member/{orgId}/remove/{authId}` | Remove member from organization       |
+| GET    | `/member/{orgId}/{authId}/get`    | Get member details                    |
+
 
 **Base URL: `/invitation`**
 
@@ -144,6 +160,18 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | GET    | `/invitation/{orgId}/pending` | Get all pending invitations of organization |
 | PUT    | `/invitation/{orgId}/{email}` | Cancel invitation                           |
 
+
+### 📦 Project Service (Spring Boot + PostgresSQL)
+**Base URL: `/project`**
+
+| Method | Endpoint                 | Description                      |
+|--------|--------------------------|----------------------------------|
+| POST   | `/project`               | Create a new project             |
+| GET    | `/project/{projectId}`   | Get project details              |
+| GET    | `/project/org/{orgId}`   | Get all projects of organization |
+| GET    | `/project/user/{authId}` | Get all projects of user         |
+| PUT    | `/project/{projectId}`   | Update project details           |
+| DELETE | `/project/{projectId}`   | Delete project                   |
 
 
 
