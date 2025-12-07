@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, String> {
     List<ProjectMember> findByAuthId(String authId);
+
+    ProjectMember findByProjectIdAndAuthId(String projectId, String performedBy);
 }

@@ -14,5 +14,5 @@ public class AddMemberRequest {
     private String authId;
 
     @NotNull
-    private Role role;
+    private String role;
 }
