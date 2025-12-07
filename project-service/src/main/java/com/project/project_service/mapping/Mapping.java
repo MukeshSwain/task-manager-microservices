@@ -13,6 +13,10 @@ public class Mapping {
                 .ownerAuthId(project.getOwnerAuthId())
                 .name(project.getName())
                 .description(project.getDescription())
+                .priority(project.getPriority())
+                .status(project.getStatus())
+                .deadline(project.getDeadline())
+                .teamLeadAuthId(project.getTeamLeadAuthId())
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .build();

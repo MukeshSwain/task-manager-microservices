@@ -1,5 +1,7 @@
 package com.project.project_service.dto;
 
+import com.project.project_service.model.Priority;
+import com.project.project_service.model.Status;
 import lombok.*;
 
 import java.time.OffsetDateTime;
@@ -15,6 +17,10 @@ public class ProjectResponse {
     private String ownerAuthId;
     private String name;
     private String description;
+    private String teamLeadAuthId;
+    private Priority priority;
+    private Status status;
+    private OffsetDateTime deadline;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }
