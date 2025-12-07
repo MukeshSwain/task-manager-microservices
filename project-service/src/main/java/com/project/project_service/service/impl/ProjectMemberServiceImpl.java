@@ -64,6 +64,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
     }
 
     @Override
+    @Transactional
     public void removeMember(String projectId, String authId, String performedBy) {
         ProjectMember actor = projectMemberRepository.findByProjectIdAndAuthId(projectId, performedBy);
         if(actor.getRole() != Role.OWNER){
@@ -87,12 +88,30 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
     }
 
     @Override
+    @Transactional
     public ProjectMemberResponse updateRole(String projectId, String authId, UpdateMemberRoleRequest req, String performedBy) {
-        return null;
+        ProjectMember member = projectMemberRepository.findByProjectIdAndAuthId(projectId,authId);
+        if (member == null){
+            throw new NotFoundException("Member not found!");
+        }
+        ProjectMember actor = projectMemberRepository.findByProjectIdAndAuthId(projectId, performedBy);
+        if (actor.getRole() != Role.OWNER){
+            throw new BadRequestException("Only owner can update role");
+        }
+       if(member.getRole() == Role.OWNER && Role.valueOf( String.valueOf(req.getRole()).toUpperCase()) != Role.OWNER){
+           long owners = projectMemberRepository.countByProjectIdAndRole(projectId, Role.OWNER);
+           if (owners <= 1) throw new BadRequestException("Cannot demote last owner");
+       }
+       member.setRole(Role.valueOf(String.valueOf(req.getRole()).toUpperCase()));
+       return Mapping.toProjectMemberResponse(projectMemberRepository.saveAndFlush(member));
     }
 
     @Override
+    @Transactional
     public List<ProjectMemberResponse> listMembers(String projectId) {
-        return List.of();
+
+        List<ProjectMember> memberResponseList = projectMemberRepository.findByProjectId(projectId);
+        return memberResponseList.stream()
+                .map(member->Mapping.toProjectMemberResponse(member)).toList();
     }
 }
