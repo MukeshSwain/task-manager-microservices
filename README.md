@@ -173,7 +173,15 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | PUT    | `/project/{projectId}`   | Update project details           |
 | DELETE | `/project/{projectId}`   | Delete project                   |
 
+**Base URL: `projectMember=/api/projects/{projectId}/members`**
+
+| Method | Endpoint                                | Description                |
+|--------|-----------------------------------------|----------------------------|
+| POST   | `/projectMember/{performedBy}`          | Add member to project      |
+| GET    | `/projectMember`                        | Get all members of project |
+| DELETE | `/projectMember/{authId}/{performedBy}` | Remove member from project |
+| PUT    | `/projectMember/{authId}/{performedBy}` | update role                |
 
 
 ## 🙌 Author
-Mukesh Swain-Backend | MERN | Microservices
+Mukesh Swain-Backend Developer | Spring Boot | MERN | Microservices
