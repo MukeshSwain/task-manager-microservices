@@ -3,6 +3,7 @@ package com.project.project_service.controller;
 
 import com.project.project_service.dto.CreateProjectRequest;
 import com.project.project_service.dto.ProjectResponse;
+import com.project.project_service.dto.UpdateProjectRequest;
 import com.project.project_service.service.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -35,9 +36,9 @@ public class ProjectController {
     public ResponseEntity<List<ProjectResponse>> listByUser(@PathVariable String authId){
         return ResponseEntity.ok(projectService.listByUser(authId));
     }
-    @PutMapping("/{projectId}")
-    public ResponseEntity<ProjectResponse> updateProject(@PathVariable String projectId, @RequestBody CreateProjectRequest req){
-        return ResponseEntity.ok(projectService.updateProject(projectId, req));
+    @PutMapping("/{projectId}/{performedBy}")
+    public ResponseEntity<ProjectResponse> updateProject(@PathVariable String projectId, @RequestBody UpdateProjectRequest req,@PathVariable String performedBy){
+        return ResponseEntity.ok(projectService.updateProject(projectId, req,performedBy));
     }
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(@PathVariable String projectId){

@@ -3,6 +3,7 @@ package com.project.project_service.service.impl;
 import com.project.project_service.dto.CreateProjectRequest;
 import com.project.project_service.dto.MemberResponse;
 import com.project.project_service.dto.ProjectResponse;
+import com.project.project_service.dto.UpdateProjectRequest;
 import com.project.project_service.exception.BadRequestException;
 import com.project.project_service.exception.NotFoundException;
 import com.project.project_service.feign.TenantClient;
@@ -101,19 +102,61 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public ProjectResponse updateProject(String projectId, CreateProjectRequest req) {
+    public ProjectResponse updateProject(String projectId, UpdateProjectRequest req,String performedBy) {
         Project project = projectRepository.findByIdAndDeletedFalse(projectId);
         if(project == null){
             throw new NotFoundException("Project not found");
         }
-        if(req.getName() != null && !req.getName().isBlank()){
+        MemberResponse actor = tenantClient.getMember(project.getOrgId(),performedBy);
+        if (!Role.valueOf(actor.getRole()).equals(Role.ADMIN) && !Role.valueOf(actor.getRole()).equals(Role.OWNER)) {
+            throw new BadRequestException("You are not authorized to update project");
+        }
+
+        boolean changed=false;
+        if (notBlank(req.getName()) && !req.getName().equals(project.getName())) {
             project.setName(req.getName());
+            changed = true;
         }
-        if(req.getDescription() != null && !req.getDescription().isBlank()){
+
+        if (notBlank(req.getDescription()) && !req.getDescription().equals(project.getDescription())) {
             project.setDescription(req.getDescription());
+            changed = true;
         }
-        Project savedProject = projectRepository.saveAndFlush(project);
-        return Mapping.toProjectResponse(savedProject);
+
+        if (req.getPriority() != null && req.getPriority() != project.getPriority()) {
+            project.setPriority(req.getPriority());
+            changed = true;
+        }
+
+        if (req.getStatus() != null && req.getStatus() != project.getStatus()) {
+            project.setStatus(req.getStatus());
+            changed = true;
+        }
+
+        if (req.getDeadline() != null && !req.getDeadline().equals(project.getDeadline())) {
+            project.setDeadline(req.getDeadline());
+            changed = true;
+        }
+        if (req.getTeamLeadAuthId() != null && !req.getTeamLeadAuthId().equals(project.getTeamLeadAuthId())) {
+
+            MemberResponse lead = tenantClient.getMember(project.getOrgId(), req.getTeamLeadAuthId());
+            if (lead == null) {
+                throw new BadRequestException("Team Lead must be a member of the organization");
+            }
+
+            project.setTeamLeadAuthId(req.getTeamLeadAuthId());
+            changed = true;
+        }
+        if (!changed) {
+            return Mapping.toProjectResponse(project); // no update needed
+        }
+
+        project.setUpdatedAt(OffsetDateTime.now());
+
+        Project saved = projectRepository.save(project);
+
+        return Mapping.toProjectResponse(saved);
+
     }
 
     @Override
@@ -126,5 +169,9 @@ public class ProjectServiceImpl implements ProjectService {
     project.setDeleted(true);
     project.setDeletedAt(OffsetDateTime.now());
     projectRepository.saveAndFlush(project);
+    }
+
+    private boolean notBlank(String s) {
+        return s != null && !s.isBlank();
     }
 }
