@@ -20,6 +20,7 @@ public class ProjectResponse {
     private String teamLeadAuthId;
     private Priority priority;
     private Status status;
+    private Integer memberCount;
     private OffsetDateTime deadline;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;

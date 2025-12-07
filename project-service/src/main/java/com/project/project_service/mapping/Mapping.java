@@ -12,6 +12,7 @@ public class Mapping {
                 .orgId(project.getOrgId())
                 .ownerAuthId(project.getOwnerAuthId())
                 .name(project.getName())
+                .memberCount(project.getMemberCount())
                 .description(project.getDescription())
                 .priority(project.getPriority())
                 .status(project.getStatus())

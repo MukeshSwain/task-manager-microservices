@@ -60,6 +60,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .priority(projectRequest.getPriority())
                 .status(projectRequest.getStatus())
                 .deadline(projectRequest.getDeadline())
+                .memberCount(1)
                 .build();
         Project savedProject = projectRepository.saveAndFlush(project);
         entityManager.refresh(savedProject);

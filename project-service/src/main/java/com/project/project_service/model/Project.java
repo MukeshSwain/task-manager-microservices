@@ -59,6 +59,7 @@ public class Project {
     @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private Boolean deleted = false;
+    private Integer memberCount;
 
     private OffsetDateTime deletedAt;
 

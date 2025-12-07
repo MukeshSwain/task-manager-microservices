@@ -57,6 +57,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
 
         ProjectMember savedProjectMember = projectMemberRepository.saveAndFlush(projectMember);
         entityManager.refresh(savedProjectMember);
+        project.setMemberCount(project.getMemberCount()+1);
+        projectRepository.save(project);
 
         //Todo : notification
 
@@ -66,6 +68,10 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
     @Override
     @Transactional
     public void removeMember(String projectId, String authId, String performedBy) {
+        Project project = projectRepository.findByIdAndDeletedFalse(projectId);
+        if (project == null){
+            throw new NotFoundException("Project not found!");
+        }
         ProjectMember actor = projectMemberRepository.findByProjectIdAndAuthId(projectId, performedBy);
         if(actor.getRole() != Role.OWNER){
             throw new BadRequestException("Only owner can remove members");
@@ -84,6 +90,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
             }
         }
         projectMemberRepository.delete(projectMember);
+        project.setMemberCount(project.getMemberCount()-1);
+        projectRepository.save(project);
 
     }
 
