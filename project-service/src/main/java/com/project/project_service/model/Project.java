@@ -34,6 +34,21 @@ public class Project {
     @Column(name="owner_auth_id", nullable = false)
     private String ownerAuthId;
 
+    @Column(name="team_lead_auth_id", nullable = false)
+    private String teamLeadAuthId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Priority priority=Priority.MEDIUM;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Status status=Status.ACTIVE;
+
+    private OffsetDateTime deadline;
+
     @Column(nullable = false)
     @CreationTimestamp
     private OffsetDateTime createdAt;

@@ -12,7 +12,6 @@ import lombok.*;
 public class AddMemberRequest {
     @NotNull
     private String authId;
-
     @NotNull
     private String role;
 }

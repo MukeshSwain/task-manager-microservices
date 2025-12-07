@@ -20,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
-
 @Slf4j
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -44,6 +42,10 @@ public class ProjectServiceImpl implements ProjectService {
         if(existMember == null){
             throw new NotFoundException("Member not found");
         }
+        MemberResponse teamLeadMember = tenantClient.getMember(projectRequest.getOrgId(), projectRequest.getTeamLeadAuthId());
+        if(teamLeadMember == null){
+            throw new NotFoundException("Team lead not found");
+        }
         if (!Role.valueOf(existMember.getRole()).equals(Role.ADMIN) && !Role.valueOf(existMember.getRole()).equals(Role.OWNER)) {
             throw new BadRequestException("You are not authorized to create project");
         }
@@ -53,6 +55,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .description(projectRequest.getDescription())
                 .orgId(projectRequest.getOrgId())
                 .ownerAuthId(projectRequest.getOwnerAuthId())
+                .teamLeadAuthId(projectRequest.getTeamLeadAuthId())
+                .priority(projectRequest.getPriority())
+                .status(projectRequest.getStatus())
+                .deadline(projectRequest.getDeadline())
                 .build();
         Project savedProject = projectRepository.saveAndFlush(project);
         entityManager.refresh(savedProject);
