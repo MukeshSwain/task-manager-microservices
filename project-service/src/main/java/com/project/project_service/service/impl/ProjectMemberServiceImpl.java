@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ProjectMemberServiceImpl implements ProjectMemberService {
@@ -63,8 +64,26 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
     }
 
     @Override
-    public ProjectMemberResponse removeMember(String projectId, String authId, String performedBy) {
-        return null;
+    public void removeMember(String projectId, String authId, String performedBy) {
+        ProjectMember actor = projectMemberRepository.findByProjectIdAndAuthId(projectId, performedBy);
+        if(actor.getRole() != Role.OWNER){
+            throw new BadRequestException("Only owner can remove members");
+        }
+        if (Objects.equals(authId, performedBy)){
+            throw new BadRequestException("You can't remove yourself");
+        }
+        ProjectMember projectMember = projectMemberRepository.findByProjectIdAndAuthId(projectId, authId);
+        if(projectMember == null){
+            throw new NotFoundException("Member not found!");
+        }
+        if(projectMember.getRole() == Role.OWNER){
+            long owners = projectMemberRepository.countByProjectIdAndRole(projectId, Role.OWNER);
+            if(owners <= 1){
+                throw new BadRequestException("At least one owner is required!");
+            }
+        }
+        projectMemberRepository.delete(projectMember);
+
     }
 
     @Override

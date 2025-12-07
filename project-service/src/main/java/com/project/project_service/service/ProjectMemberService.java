@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ProjectMemberService {
     ProjectMemberResponse addMember(String projectId, AddMemberRequest request, String performedBy);
-    ProjectMemberResponse removeMember(String projectId, String authId, String performedBy);
+    void removeMember(String projectId, String authId, String performedBy);
     ProjectMemberResponse updateRole(String projectId, String authId, UpdateMemberRoleRequest req, String performedBy);
     List<ProjectMemberResponse> listMembers(String projectId);
 }
