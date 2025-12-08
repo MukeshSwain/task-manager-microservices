@@ -8,9 +8,7 @@ import com.project.project_service.exception.BadRequestException;
 import com.project.project_service.exception.NotFoundException;
 import com.project.project_service.feign.TenantClient;
 import com.project.project_service.mapping.Mapping;
-import com.project.project_service.model.Project;
-import com.project.project_service.model.ProjectMember;
-import com.project.project_service.model.Role;
+import com.project.project_service.model.*;
 import com.project.project_service.repository.ProjectMemberRepository;
 import com.project.project_service.repository.ProjectRepository;
 import com.project.project_service.service.ProjectService;
@@ -57,8 +55,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .orgId(projectRequest.getOrgId())
                 .ownerAuthId(projectRequest.getOwnerAuthId())
                 .teamLeadAuthId(projectRequest.getTeamLeadAuthId())
-                .priority(projectRequest.getPriority())
-                .status(projectRequest.getStatus())
+                .priority(Priority.valueOf(projectRequest.getPriority().toUpperCase()))
+                .status(Status.valueOf(projectRequest.getStatus().toUpperCase()))
                 .deadline(projectRequest.getDeadline())
                 .memberCount(1)
                 .build();

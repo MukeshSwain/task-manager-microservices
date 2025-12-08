@@ -1,7 +1,4 @@
 package com.project.project_service.dto;
-
-import com.project.project_service.model.Priority;
-import com.project.project_service.model.Status;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -27,7 +24,7 @@ public class CreateProjectRequest {
 
     @NotNull
     private String teamLeadAuthId;
-    private Priority priority;
-    private Status status;
+    private String priority;
+    private String status;
     private OffsetDateTime deadline;
 }
