@@ -134,4 +134,16 @@ public class UserService {
                 .name(user.getName())
                 .build();
     }
+
+    public List<UserResponse> getUsersByIds(List<String> authIds){
+        if (authIds == null || authIds.isEmpty()) {
+            return List.of();
+        }
+        List<UserProfile> userProfileList = userRepository.findByAuthIdIn(authIds);
+        if (userProfileList.isEmpty()){
+            return List.of();
+        }
+        return userProfileList.stream()
+                .map(user->toUserResponse(user)).toList();
+    }
 }

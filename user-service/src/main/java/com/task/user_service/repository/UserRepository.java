@@ -4,10 +4,14 @@ import com.task.user_service.dto.UserRequest;
 import com.task.user_service.model.UserProfile;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.util.List;
+
 public interface UserRepository extends MongoRepository<UserProfile, String> {
     UserProfile findByAuthId(String authId);
 
     boolean existsByAuthId(String authId);
 
     UserProfile findByEmail(String email);
+
+    List<UserProfile> findByAuthIdIn(List<String> authIds);
 }

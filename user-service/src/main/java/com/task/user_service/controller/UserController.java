@@ -53,4 +53,10 @@ public class UserController {
     public ResponseEntity<EmailAndName> getEmailById(@PathVariable String authId){
         return ResponseEntity.ok(userService.getEmailById(authId));
     }
+    @PostMapping("/betch-fetch")
+    public List<UserResponse> getUsersBatch(@RequestBody BatchUserRequest request) {
+        return userService.getUsersByIds(request.getUserIds());
+    }
+
+
 }
