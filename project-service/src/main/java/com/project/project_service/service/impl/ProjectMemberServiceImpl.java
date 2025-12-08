@@ -3,6 +3,7 @@ package com.project.project_service.service.impl;
 import com.project.project_service.dto.AddMemberRequest;
 import com.project.project_service.dto.ProjectMemberResponse;
 import com.project.project_service.dto.UpdateMemberRoleRequest;
+import com.project.project_service.dto.UserDetail;
 import com.project.project_service.exception.BadRequestException;
 import com.project.project_service.exception.NotFoundException;
 import com.project.project_service.feign.UserClient;
@@ -18,7 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectMemberServiceImpl implements ProjectMemberService {
@@ -119,7 +123,47 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
     public List<ProjectMemberResponse> listMembers(String projectId) {
 
         List<ProjectMember> memberResponseList = projectMemberRepository.findByProjectId(projectId);
+        List<String> authIds = memberResponseList.stream()
+                .map(member->member.getAuthId())
+                .toList();
+        List<UserDetail> users = userClient.getUsersByIds(authIds);
+        Map<String, UserDetail> userDetailMap = users.stream()
+                .collect(Collectors.toMap(UserDetail::getAuthId, Function.identity()));
         return memberResponseList.stream()
-                .map(member->Mapping.toProjectMemberResponse(member)).toList();
+                .map(member -> {
+                    // Look up user details
+                    UserDetail userDetails = userDetailMap.get(member.getAuthId());
+
+                    return ProjectMemberResponse.builder()
+                            .id(member.getId())
+                            .projectId(member.getProjectId())
+                            .role(member.getRole())
+                            .joinedAt(member.getJoinedAt())
+                            // Populate the nested UserSummary
+                            .user(mapToSummary(userDetails, member.getAuthId()))
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+
+
+
+    }
+    private ProjectMemberResponse.UserSummary mapToSummary(UserDetail user, String authId) {
+        if (user == null) {
+            return ProjectMemberResponse.UserSummary.builder()
+                    .authId(authId)
+                    .name("Unknown User") // Fallback
+                    .email("")
+                    .avatarUrl(null)
+                    .build();
+        }
+        return ProjectMemberResponse.UserSummary.builder()
+                .authId(user.getAuthId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .avatarUrl(user.getAvatarUrl())
+                .orgRole(user.getRole())
+                .build();
     }
 }

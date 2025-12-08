@@ -1,8 +1,15 @@
 package com.project.project_service.feign;
 
+import com.project.project_service.dto.UserDetail;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "user-service", url = "http://localhost:8082/api")
+import java.util.List;
+
+@FeignClient(name = "user-service", url = "http://localhost:8082/api/users")
 public interface UserClient {
+    @PostMapping("/betch-fetch")
+    List<UserDetail> getUsersByIds(@RequestBody List<String> authIds);
 
 }

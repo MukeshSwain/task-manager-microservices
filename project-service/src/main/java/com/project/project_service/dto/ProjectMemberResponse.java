@@ -1,19 +1,32 @@
 package com.project.project_service.dto;
 
 import com.project.project_service.model.Role;
-import lombok.*;
-
+import com.project.project_service.model.Status;
+import lombok.Builder;
+import lombok.Data;
 import java.time.OffsetDateTime;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 @Builder
 public class ProjectMemberResponse {
+
     private String id;
     private String projectId;
-    private String authId;
+
+    // Use an Enum, not a String, for type safety
     private Role role;
-    OffsetDateTime joinedAt;
+    private OffsetDateTime joinedAt;
+
+    // Replaces 'authId'. Contains the populated user data.
+    private UserSummary user;
+
+    @Data
+    @Builder
+    public static class UserSummary {
+        private String authId;
+        private String name;
+        private String email;
+        private String avatarUrl;
+        private String orgRole;
+    }
 }

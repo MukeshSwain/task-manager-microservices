@@ -27,7 +27,6 @@ public class Mapping {
         return ProjectMemberResponse.builder()
                 .id(projectMember.getId())
                 .projectId(projectMember.getProjectId())
-                .authId(projectMember.getAuthId())
                 .role(projectMember.getRole())
                 .joinedAt(projectMember.getJoinedAt())
                 .build();

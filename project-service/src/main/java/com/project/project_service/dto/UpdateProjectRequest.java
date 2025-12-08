@@ -14,8 +14,8 @@ import java.time.OffsetDateTime;
 public class UpdateProjectRequest {
     private String name;
     private String description;
-    private Priority priority;
-    private Status status;
+    private String priority;
+    private String status;
     private OffsetDateTime deadline;
     private String teamLeadAuthId;
 }

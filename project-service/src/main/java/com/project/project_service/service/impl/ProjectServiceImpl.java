@@ -122,13 +122,14 @@ public class ProjectServiceImpl implements ProjectService {
             changed = true;
         }
 
-        if (req.getPriority() != null && req.getPriority() != project.getPriority()) {
-            project.setPriority(req.getPriority());
+        if (req.getPriority() != null && Priority.valueOf(req.getPriority().toUpperCase()) != project.getPriority()) {
+            project.setPriority(Priority.valueOf(req.getPriority().toUpperCase()));
+
             changed = true;
         }
 
-        if (req.getStatus() != null && req.getStatus() != project.getStatus()) {
-            project.setStatus(req.getStatus());
+        if (req.getStatus() != null && Status.valueOf(req.getStatus().toUpperCase()) != project.getStatus()) {
+            project.setStatus(Status.valueOf(req.getStatus().toUpperCase()));
             changed = true;
         }
 
