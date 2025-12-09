@@ -126,6 +126,7 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | GET    | `/user/all`                  | Get all users profile details |
 | GET    | `/user/lookup`               | Lookup user by email          |
 | GET    | `/user/email/:authId`        | Get email by authId           |
+| POST   | `/user/betch-fetch`          | Get users by authIds          |
 
 
   
@@ -164,14 +165,14 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 ### 📦 Project Service (Spring Boot + PostgresSQL)
 **Base URL: `/project`**
 
-| Method | Endpoint                 | Description                      |
-|--------|--------------------------|----------------------------------|
-| POST   | `/project`               | Create a new project             |
-| GET    | `/project/{projectId}`   | Get project details              |
-| GET    | `/project/org/{orgId}`   | Get all projects of organization |
-| GET    | `/project/user/{authId}` | Get all projects of user         |
-| PUT    | `/project/{projectId}`   | Update project details           |
-| DELETE | `/project/{projectId}`   | Delete project                   |
+| Method | Endpoint                             | Description                      |
+|--------|--------------------------------------|----------------------------------|
+| POST   | `/project`                           | Create a new project             |
+| GET    | `/project/{projectId}`               | Get project details              |
+| GET    | `/project/org/{orgId}`               | Get all projects of organization |
+| GET    | `/project/user/{authId}`             | Get all projects of user         |
+| PUT    | `/project/{projectId}/{performedBy}` | Update project details           |
+| DELETE | `/project/{projectId}`               | Delete project                   |
 
 **Base URL: `projectMember=/api/projects/{projectId}/members`**
 

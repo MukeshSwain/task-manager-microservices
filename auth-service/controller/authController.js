@@ -11,7 +11,7 @@ import {
   generateToken,
   verifyResfreshToken,
 } from "../config/generateToken.js";
-import { log } from "console";
+
 export const signup = async (req, res) => {
   try {
     const validation = signupSchema.safeParse(req.body);
