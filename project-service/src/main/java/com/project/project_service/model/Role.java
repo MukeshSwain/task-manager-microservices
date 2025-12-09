@@ -6,6 +6,7 @@ public enum Role {
     ADMIN,
     EDITOR,
     OWNER,
-    MEMBER
+    MEMBER,
+    LEAD
 
 }

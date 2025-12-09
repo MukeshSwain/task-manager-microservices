@@ -63,10 +63,23 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
         entityManager.refresh(savedProjectMember);
         project.setMemberCount(project.getMemberCount()+1);
         projectRepository.save(project);
+        UserDetail user = userClient.getUserById(request.getAuthId());
 
         //Todo : notification
 
-        return Mapping.toProjectMemberResponse(savedProjectMember);
+        return ProjectMemberResponse.builder()
+                .id(savedProjectMember.getId())
+                .projectId(savedProjectMember.getProjectId())
+                .role(savedProjectMember.getRole())
+                .joinedAt(savedProjectMember.getJoinedAt())
+                .user(ProjectMemberResponse.UserSummary.builder()
+                        .authId(savedProjectMember.getAuthId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .avatarUrl(user.getAvatarUrl())
+                        .orgRole(user.getRole())
+                        .build())
+                .build();
     }
 
     @Override
