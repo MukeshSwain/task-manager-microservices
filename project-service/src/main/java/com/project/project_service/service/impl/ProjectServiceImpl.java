@@ -36,42 +36,75 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public ProjectResponse createProject(CreateProjectRequest projectRequest) {
-        MemberResponse existMember = tenantClient.getMember(projectRequest.getOrgId(), projectRequest.getOwnerAuthId());
-        if(existMember == null){
-            throw new NotFoundException("Member not found");
+    public ProjectResponse createProject(CreateProjectRequest req) {
+        MemberResponse owner = tenantClient.getMember(req.getOrgId(), req.getOwnerAuthId());
+        if (owner == null) {
+            throw new NotFoundException("Owner not found in organization");
         }
-        MemberResponse teamLeadMember = tenantClient.getMember(projectRequest.getOrgId(), projectRequest.getTeamLeadAuthId());
-        if(teamLeadMember == null){
-            throw new NotFoundException("Team lead not found");
+        if (owner.getRole() == null) {
+            throw new BadRequestException("Owner has no role assigned");
         }
-        if (!Role.valueOf(existMember.getRole()).equals(Role.ADMIN) && !Role.valueOf(existMember.getRole()).equals(Role.OWNER)) {
-            throw new BadRequestException("You are not authorized to create project");
+        try {
+            Role ownerRole = Role.valueOf(owner.getRole().toUpperCase());
+            if (ownerRole != Role.ADMIN && ownerRole != Role.OWNER) {
+                throw new BadRequestException("You are not authorized to create a project");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid role format: " + owner.getRole());
+        }
+        boolean isSameUser = req.getOwnerAuthId().equals(req.getTeamLeadAuthId());
+        MemberResponse teamLead;
+
+        if (isSameUser) {
+            // Reuse the data we already fetched!
+            teamLead = owner;
+        } else {
+            // Only fetch if it's a different person
+            teamLead = tenantClient.getMember(req.getOrgId(), req.getTeamLeadAuthId());
+            if (teamLead == null) {
+                throw new NotFoundException("Team lead not found in organization");
+            }
         }
 
+        int memberCount = isSameUser ? 1 : 2;
+
+        // 4. Create Project
         Project project = Project.builder()
-                .name(projectRequest.getName())
-                .description(projectRequest.getDescription())
-                .orgId(projectRequest.getOrgId())
-                .ownerAuthId(projectRequest.getOwnerAuthId())
-                .teamLeadAuthId(projectRequest.getTeamLeadAuthId())
-                .priority(Priority.valueOf(projectRequest.getPriority().toUpperCase()))
-                .status(Status.valueOf(projectRequest.getStatus().toUpperCase()))
-                .deadline(projectRequest.getDeadline())
-                .memberCount(1)
+                .name(req.getName())
+                .description(req.getDescription())
+                .orgId(req.getOrgId())
+                .ownerAuthId(req.getOwnerAuthId())
+                .teamLeadAuthId(req.getTeamLeadAuthId())
+                .priority(Priority.valueOf(req.getPriority().toUpperCase()))
+                .status(Status.valueOf(req.getStatus().toUpperCase()))
+                .deadline(req.getDeadline())
+                .memberCount(memberCount)
                 .build();
-        Project savedProject = projectRepository.saveAndFlush(project);
-        entityManager.refresh(savedProject);
-        //add owner as project member
-        ProjectMember ownerMember = ProjectMember.builder()
-                .projectId(savedProject.getId())
-                .authId(projectRequest.getOwnerAuthId())
-                .role(Role.OWNER)
-                .build();
-        memberRepository.save(ownerMember);
 
-        // Publish event async (optional) todo
-        return Mapping.toProjectResponse(savedProject);
+        Project saved = projectRepository.saveAndFlush(project);
+
+        // Performance Note: Only keep this if you rely on DB triggers for timestamps.
+        // If you use JPA @CreatedDate, remove this line to save a SELECT query.
+        entityManager.refresh(saved);
+
+
+        // Add Owner
+        memberRepository.save(ProjectMember.builder()
+                .projectId(saved.getId())
+                .authId(req.getOwnerAuthId())
+                .role(Role.OWNER)
+                .build());
+
+        // Add Team Lead (only if different)
+        if (!isSameUser) {
+            memberRepository.save(ProjectMember.builder()
+                    .projectId(saved.getId())
+                    .authId(req.getTeamLeadAuthId())
+                    .role(Role.LEAD)
+                    .build());
+        }
+
+        return Mapping.toProjectResponse(saved);
     }
 
     @Override
