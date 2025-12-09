@@ -128,7 +128,21 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
            if (owners <= 1) throw new BadRequestException("Cannot demote last owner");
        }
        member.setRole(Role.valueOf(String.valueOf(req.getRole()).toUpperCase()));
-       return Mapping.toProjectMemberResponse(projectMemberRepository.saveAndFlush(member));
+       ProjectMember updatedMember = projectMemberRepository.saveAndFlush(member);
+       UserDetail  userDetail = userClient.getUserById(updatedMember.getAuthId());
+       return ProjectMemberResponse.builder()
+               .id(updatedMember.getId())
+               .projectId(updatedMember.getProjectId())
+               .role(updatedMember.getRole())
+               .joinedAt(updatedMember.getJoinedAt())
+               .user(ProjectMemberResponse.UserSummary.builder()
+                       .authId(updatedMember.getAuthId())
+                       .name(userDetail.getName())
+                       .email(userDetail.getEmail())
+                       .avatarUrl(userDetail.getAvatarUrl())
+                       .orgRole(userDetail.getRole())
+                       .build())
+               .build();
     }
 
     @Override
