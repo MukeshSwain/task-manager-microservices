@@ -1,0 +1,17 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: task-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/taskdb
+    username: postgres
+    password: Mike@133
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        formate_sql: true
