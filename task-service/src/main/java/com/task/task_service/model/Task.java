@@ -15,7 +15,7 @@ import java.util.*;
 @Table(
         name = "tasks",
         indexes = {
-                @Index(name = "idx_tasks_project", columnList = "tenant_id, project_id"),
+                @Index(name = "idx_tasks_project", columnList = "project_id"),
                 @Index(name = "idx_tasks_assigned", columnList = "assigned_to_auth_id"),
                 @Index(name = "idx_tasks_parent", columnList = "parent_id"),
                 @Index(name = "idx_tasks_status", columnList = "status")
@@ -43,10 +43,14 @@ public class Task {
     private String description;
 
     @Column(nullable = false)
-    private String status; // TODO, IN_PROGRESS, DONE
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Status status=Status.TODO;
 
     @Column(nullable = false)
-    private String priority; // LOW, MEDIUM, HIGH
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Priority priority=Priority.MEDIUM;
 
     private OffsetDateTime dueDate;
 

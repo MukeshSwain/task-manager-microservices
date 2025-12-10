@@ -11,8 +11,8 @@ public class Mapper {
                 .id(task.getId())
                 .title(task.getTitle())
                 .description(task.getDescription())
-                .status(task.getStatus())
-                .priority(task.getPriority())
+                .status(String.valueOf(task.getStatus()))
+                .priority(String.valueOf(task.getPriority()))
                 .dueDate(task.getDueDate())
                 .createdByAuthId(task.getCreatedByAuthId())
                 .assignedToAuthId(task.getAssignedToAuthId())
@@ -20,7 +20,7 @@ public class Mapper {
                 .attributes(task.getAttributes())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
-
+                .parentId(task.getProjectId())
                 .build();
 
     }
