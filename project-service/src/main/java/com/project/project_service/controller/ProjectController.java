@@ -46,6 +46,8 @@ public class ProjectController {
         projectService.softDeleteProject(projectId);
         return ResponseEntity.ok().build();
     }
-
-
+    @GetMapping("/validate/{projectId}")
+    public ResponseEntity<Boolean> validateProject(@PathVariable String projectId){
+        return ResponseEntity.ok(projectService.validate(projectId));
+    }
 }

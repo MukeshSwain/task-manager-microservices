@@ -15,4 +15,6 @@ public interface ProjectService {
     List<ProjectResponse> listByUser(String authId);
     ProjectResponse updateProject(String projectId, UpdateProjectRequest req,String performedBy);
     void softDeleteProject(String projectId);
+
+    Boolean validate(String projectId);
 }

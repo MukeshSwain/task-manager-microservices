@@ -251,6 +251,11 @@ public class ProjectServiceImpl implements ProjectService {
     projectRepository.saveAndFlush(project);
     }
 
+    @Override
+    public Boolean validate(String projectId) {
+        return projectRepository.existsById(projectId);
+    }
+
     private boolean notBlank(String s) {
         return s != null && !s.isBlank();
     }
