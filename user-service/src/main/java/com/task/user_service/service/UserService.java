@@ -146,4 +146,8 @@ public class UserService {
         return userProfileList.stream()
                 .map(user->toUserResponse(user)).toList();
     }
+
+    public Boolean validate(String authId) {
+        return userRepository.existsByAuthId(authId);
+    }
 }

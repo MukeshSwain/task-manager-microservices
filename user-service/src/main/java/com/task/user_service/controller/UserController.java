@@ -57,6 +57,8 @@ public class UserController {
     public List<UserResponse> getUsersBatch(@RequestBody List<String> authIds) {
         return userService.getUsersByIds(authIds);
     }
-
-
+    @GetMapping("/validate/{authId}")
+    public ResponseEntity<Boolean> validate(@PathVariable String authId){
+        return ResponseEntity.ok(userService.validate(authId));
+    }
 }
