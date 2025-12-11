@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Slf4j
 @Service
@@ -36,7 +37,6 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @Transactional
     public TaskResponse createTask(CreateTaskRequest request, String projectId, String authId) {
         log.info("Creating task for project: {}", projectId);
 
@@ -85,9 +85,30 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @Transactional
     public TaskResponse updateTask(String taskId, UpdateTaskRequest request) {
-       return null;
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(()->new ResourceNotFoundException("Task not found"));
+        if (request.getAssignedToAuthId() != null && !request.getAssignedToAuthId().equals(task.getAssignedToAuthId())){
+            boolean isExistUser = userClient.getUserById(request.getAssignedToAuthId());
+            if(!isExistUser){
+                throw new ResourceNotFoundException("User not found");
+            }
+            task.setAssignedToAuthId(request.getAssignedToAuthId());
+        }
+        updateIfNotNull(request.getTitle(),task::setTitle);
+        updateIfNotNull(request.getDescription(),task::setDescription);
+        updateIfNotNull(request.getDueDate(),task::setDueDate);
+        updateIfNotNull(request.getTags(),task::setTags);
+        updateIfNotNull(request.getAttributes(),task::setAttributes);
+
+        if (request.getPriority() != null){
+            task.setPriority(parsePriority(request.getPriority()));
+        }
+        if (request.getStatus() !=null){
+            task.setStatus(parseStatus(request.getStatus()));
+        }
+        Task updated = taskRepository.save(task);
+       return Mapper.toTaskresponse(updated);
     }
 
     @Override
@@ -119,6 +140,22 @@ public class TaskServiceImpl implements TaskService {
         } catch (IllegalArgumentException e) {
             log.warn("Invalid priority {}, defaulting to MEDIUM", priorityStr);
             return Priority.MEDIUM;
+        }
+    }
+    private Status parseStatus(String statusStr){
+        if (statusStr == null){
+            return Status.TODO;
+        }
+        try {
+            return Status.valueOf(statusStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status {}, defaulting to TODO", statusStr);
+            return Status.TODO;
+        }
+    }
+    private <T> void updateIfNotNull(T value, Consumer<T> setter){
+        if(value != null){
+            setter.accept(value);
         }
     }
 }
