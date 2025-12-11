@@ -76,7 +76,7 @@ public class TaskServiceImpl implements TaskService {
 
         Task saved = taskRepository.save(task);
         log.info("Task created successfully with ID: {}", saved.getId());
-        return Mapper.toTaskresponse(saved);
+        return mapToTaskResponseRecursive(saved);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class TaskServiceImpl implements TaskService {
             task.setPriority(parsePriority(request.getPriority()));
         }
         Task updated = taskRepository.save(task);
-       return Mapper.toTaskresponse(updated);
+       return mapToTaskResponseRecursive(updated);
     }
 
     @Override
