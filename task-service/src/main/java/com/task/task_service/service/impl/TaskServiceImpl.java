@@ -95,12 +95,8 @@ public class TaskServiceImpl implements TaskService {
         updateIfNotNull(request.getDueDate(),task::setDueDate);
         updateIfNotNull(request.getTags(),task::setTags);
         updateIfNotNull(request.getAttributes(),task::setAttributes);
-
         if (request.getPriority() != null){
             task.setPriority(parsePriority(request.getPriority()));
-        }
-        if (request.getStatus() !=null){
-            task.setStatus(parseStatus(request.getStatus()));
         }
         Task updated = taskRepository.save(task);
        return Mapper.toTaskresponse(updated);
