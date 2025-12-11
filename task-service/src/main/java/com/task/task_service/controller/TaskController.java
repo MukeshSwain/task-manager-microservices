@@ -26,4 +26,8 @@ public class TaskController {
     public ResponseEntity<TaskResponse> updateTask(@PathVariable String taskId, @RequestBody UpdateTaskRequest request){
         return new ResponseEntity<>(taskService.updateTask(taskId,request), HttpStatus.OK);
     }
+    @GetMapping("/{taskId}")
+    public ResponseEntity<TaskResponse> getTask(@PathVariable String taskId){
+        return new ResponseEntity<>(taskService.getTaskById(taskId),HttpStatus.OK);
+    }
 }

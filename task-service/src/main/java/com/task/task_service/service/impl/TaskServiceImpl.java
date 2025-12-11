@@ -113,17 +113,41 @@ public class TaskServiceImpl implements TaskService {
     public void changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
 
     }
-
     @Override
+    @Transactional(readOnly = true)
     public TaskResponse getTaskById(String taskId) {
-       return null;
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        return mapToTaskResponseRecursive(task);
     }
+
 
     @Override
     public List<TaskListResponse> getTasksByProject(String projectId) {
         return null;
     }
 
+    // Helper method to handle the hierarchy recursion
+    private TaskResponse mapToTaskResponseRecursive(Task task) {
+        TaskResponse response = Mapper.toTaskresponse(task);
+
+        // B. Populate Parent ID (Accessing .getParent() triggers Lazy Load)
+        if (task.getParent() != null) {
+            response.setParentId(task.getParent().getId());
+        }
+
+        // C. Populate Subtasks (Accessing .getSubTasks() triggers Lazy Load)
+        if (task.getSubTasks() != null && !task.getSubTasks().isEmpty()) {
+            List<TaskResponse> subTaskResponses = task.getSubTasks().stream()
+                    .map(this::mapToTaskResponseRecursive) // Recursive call
+                    .toList(); // Use .collect(Collectors.toList()) for Java < 16
+            response.setSubTasks(subTaskResponses);
+        } else {
+            response.setSubTasks(new ArrayList<>());
+        }
+
+        return response;
+    }
     private Priority parsePriority(String priorityStr) {
         if (priorityStr == null) return Priority.MEDIUM;
         try {
