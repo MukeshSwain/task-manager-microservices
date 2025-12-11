@@ -2,9 +2,6 @@ package com.task.task_service.mapper;
 
 import com.task.task_service.dto.TaskResponse;
 import com.task.task_service.model.Task;
-
-import java.util.List;
-
 public class Mapper {
     public static TaskResponse toTaskresponse(Task task){
         return TaskResponse.builder()
@@ -17,6 +14,7 @@ public class Mapper {
                 .createdByAuthId(task.getCreatedByAuthId())
                 .assignedToAuthId(task.getAssignedToAuthId())
                 .tags(task.getTags())
+                .projectId(task.getProjectId())
                 .attributes(task.getAttributes())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())

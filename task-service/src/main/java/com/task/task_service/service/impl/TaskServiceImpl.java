@@ -10,7 +10,6 @@ import com.task.task_service.model.Task;
 import com.task.task_service.model.Status; // Assumed Enum
 import com.task.task_service.repository.TaskRepository;
 import com.task.task_service.service.TaskService;
-import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
