@@ -27,13 +27,10 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectClient projectClient;
     private final UserClient userClient;
-    private final EntityManager entityManager;
-
-    public TaskServiceImpl(TaskRepository taskRepository, ProjectClient projectClient, UserClient userClient, EntityManager entityManager) {
+    public TaskServiceImpl(TaskRepository taskRepository, ProjectClient projectClient, UserClient userClient) {
         this.taskRepository = taskRepository;
         this.projectClient = projectClient;
         this.userClient = userClient;
-        this.entityManager = entityManager;
     }
 
     @Override
@@ -78,8 +75,7 @@ public class TaskServiceImpl implements TaskService {
                 .parent(parent) // Hibernate handles the relationship automatically
                 .build();
 
-        Task saved = taskRepository.saveAndFlush(task);
-        entityManager.refresh(saved);
+        Task saved = taskRepository.save(task);
         log.info("Task created successfully with ID: {}", saved.getId());
         return Mapper.toTaskresponse(saved);
     }
