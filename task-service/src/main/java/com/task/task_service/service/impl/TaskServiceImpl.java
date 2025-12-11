@@ -76,7 +76,7 @@ public class TaskServiceImpl implements TaskService {
 
         Task saved = taskRepository.save(task);
         log.info("Task created successfully with ID: {}", saved.getId());
-        return mapToTaskResponseRecursive(saved);
+        return Mapper.toTaskresponse(saved);
     }
 
     @Override
