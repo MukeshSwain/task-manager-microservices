@@ -7,5 +7,5 @@ import lombok.Data;
 public class ChangeTaskStatusRequest {
 
     @NotBlank
-    private String status; // TODO, IN_PROGRESS, DONE
+    private String status;
 }

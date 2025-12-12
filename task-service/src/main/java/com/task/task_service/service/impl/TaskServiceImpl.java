@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -112,11 +111,17 @@ public class TaskServiceImpl implements TaskService {
     public void assignTask(String taskId, AssignTaskRequest request) {
 
     }
-
     @Override
     @Transactional
-    public void changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
-
+    public TaskResponse changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        if(task.getStatus().isTerminal()){
+            throw new ResourceNotFoundException("Task is already in terminal state");
+        }
+        Status newStatus = parseStatus(request.getStatus());
+        task.setStatus(newStatus);
+        return Mapper.toTaskresponse(task);
     }
     @Override
     @Transactional(readOnly = true)

@@ -1,9 +1,6 @@
 package com.task.task_service.controller;
 
-import com.task.task_service.dto.CreateTaskRequest;
-import com.task.task_service.dto.TaskListResponse;
-import com.task.task_service.dto.TaskResponse;
-import com.task.task_service.dto.UpdateTaskRequest;
+import com.task.task_service.dto.*;
 import com.task.task_service.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -38,5 +35,9 @@ public class TaskController {
                                                                     @RequestParam(defaultValue = "10") int size
                                                                     ){
         return new ResponseEntity<>(taskService.getTasksByProject(projectId,page,size),HttpStatus.OK);
+    }
+    @PutMapping("/{taskId}/status")
+    public ResponseEntity<TaskResponse> changeTaskStatus(@PathVariable String taskId, @RequestBody ChangeTaskStatusRequest request){
+        return new ResponseEntity<>(taskService.changeTaskStatus(taskId,request), HttpStatus.OK);
     }
 }
