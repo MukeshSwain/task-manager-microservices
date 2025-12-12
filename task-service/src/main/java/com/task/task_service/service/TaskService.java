@@ -1,6 +1,8 @@
 package com.task.task_service.service;
 
 import com.task.task_service.dto.*;
+import org.springframework.data.domain.Page;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -11,5 +13,6 @@ public interface TaskService {
     void assignTask(String taskId, AssignTaskRequest request);
     void changeTaskStatus(String taskId, ChangeTaskStatusRequest request);
     TaskResponse getTaskById(String taskId);
-    List<TaskListResponse> getTasksByProject(String projectId);
+    @Transactional(readOnly = true)
+    Page<TaskListResponse> getTasksByProject(String projectId, int page, int size);
 }

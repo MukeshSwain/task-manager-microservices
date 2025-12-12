@@ -11,6 +11,10 @@ import com.task.task_service.model.Status; // Assumed Enum
 import com.task.task_service.repository.TaskRepository;
 import com.task.task_service.service.TaskService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -121,10 +126,19 @@ public class TaskServiceImpl implements TaskService {
         return mapToTaskResponseRecursive(task);
     }
 
-
+    @Transactional(readOnly = true)
     @Override
-    public List<TaskListResponse> getTasksByProject(String projectId) {
-        return null;
+    public Page<TaskListResponse> getTasksByProject(String projectId, int page, int size) {
+        boolean isProjectExist = projectClient.getProjectById(projectId);
+        if (!isProjectExist) {
+            throw new ResourceNotFoundException("Project not found");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("dueDate").ascending());
+
+        Page<Task> tasks = taskRepository.findAllByProjectId(projectId, pageable);
+
+        return tasks.map(task -> Mapper.toTaskListResponse(task));
     }
 
     // Helper method to handle the hierarchy recursion

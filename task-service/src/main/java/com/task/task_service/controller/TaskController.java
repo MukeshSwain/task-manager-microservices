@@ -1,14 +1,15 @@
 package com.task.task_service.controller;
 
 import com.task.task_service.dto.CreateTaskRequest;
+import com.task.task_service.dto.TaskListResponse;
 import com.task.task_service.dto.TaskResponse;
 import com.task.task_service.dto.UpdateTaskRequest;
 import com.task.task_service.service.TaskService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 @RestController
 @RequestMapping("/api/{projectId}/tasks")
 public class TaskController {
@@ -29,5 +30,13 @@ public class TaskController {
     @GetMapping("/{taskId}")
     public ResponseEntity<TaskResponse> getTask(@PathVariable String taskId){
         return new ResponseEntity<>(taskService.getTaskById(taskId),HttpStatus.OK);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<TaskListResponse>> getTasksByProject(@PathVariable String projectId,
+                                                                    @RequestParam(defaultValue = "0") int page,
+                                                                    @RequestParam(defaultValue = "10") int size
+                                                                    ){
+        return new ResponseEntity<>(taskService.getTasksByProject(projectId,page,size),HttpStatus.OK);
     }
 }

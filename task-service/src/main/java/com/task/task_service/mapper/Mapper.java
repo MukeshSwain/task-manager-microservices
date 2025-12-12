@@ -1,5 +1,6 @@
 package com.task.task_service.mapper;
 
+import com.task.task_service.dto.TaskListResponse;
 import com.task.task_service.dto.TaskResponse;
 import com.task.task_service.model.Task;
 public class Mapper {
@@ -21,5 +22,18 @@ public class Mapper {
                 .parentId(task.getProjectId())
                 .build();
 
+    }
+
+    public static TaskListResponse toTaskListResponse(Task task) {
+        return TaskListResponse.builder()
+                .id(task.getId())
+                .title(task.getTitle())
+                .status(String.valueOf(task.getStatus().name()))
+                .priority(String.valueOf(task.getPriority().name()))
+                .dueDate(task.getDueDate())
+                .assignedToAuthId(task.getAssignedToAuthId())
+                .parentId(task.getProjectId())
+                .parentId(task.getParent()!=null ?task.getParent().getId():null)
+                .build();
     }
 }
