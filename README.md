@@ -10,6 +10,7 @@ and modern backend engineering practices.
 - **Tenant Service** (Spring Boot + PostgresSQL)
 - **Notification Service** (Spring Boot + RabbitMQ)
 - **Project Service** (Spring Boot + PostgresSQL)
+- **Task Service** (Spring Boot + PostgresSQL)
 
 Additional services (Task, Billing, Notification, Gateway, etc.) will be added as the system evolves.
 # 🚀 Architecture Overview
@@ -26,6 +27,7 @@ Additional services (Task, Billing, Notification, Gateway, etc.) will be added a
 - **tenant-service**
 - **notification-service**
 - **project-service**
+- **task-service**
 
 # Tech Stack
 - **Auth Service**
@@ -65,6 +67,8 @@ Additional services (Task, Billing, Notification, Gateway, etc.) will be added a
   - Sending emails
 - **Project Service**
   - Managing project related operations
+- **Task Service**
+  - Managing task related operations
   
 
 ## Run Locally
@@ -98,6 +102,13 @@ Additional services (Task, Billing, Notification, Gateway, etc.) will be added a
   cd project-service
   ./mvnw spring-boot:run
 ```
+
+## Task Service
+```bash
+  cd task-service
+  ./mvnw spring-boot:run
+```
+
 # API Documentation / Endpoints
 Below is a high-level overview of the core API endpoints for each service. Full Swagger/OpenAPI specs can be added later.
 ### 🔐 Auth Service (Node.js + Prisma + MySQL)
@@ -127,9 +138,7 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | GET    | `/user/lookup`               | Lookup user by email          |
 | GET    | `/user/email/:authId`        | Get email by authId           |
 | POST   | `/user/betch-fetch`          | Get users by authIds          |
-
-
-  
+| GET    | `/user/validate/{authId}`    | Validate user by authId       |
 
 
 ### 📦 Tenant Service (Spring Boot + PostgresSQL)
@@ -173,6 +182,8 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | GET    | `/project/user/{authId}`             | Get all projects of user         |
 | PUT    | `/project/{projectId}/{performedBy}` | Update project details           |
 | DELETE | `/project/{projectId}`               | Delete project                   |
+| GET    | `/project/validate/{projectId}`      | validate the project by id       |
+
 
 **Base URL: `projectMember=/api/projects/{projectId}/members`**
 
@@ -182,6 +193,20 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 | GET    | `/projectMember`                        | Get all members of project |
 | DELETE | `/projectMember/{authId}/{performedBy}` | Remove member from project |
 | PUT    | `/projectMember/{authId}/{performedBy}` | update role                |
+
+
+### 📦 Task Service (Spring Boot + PostgresSQL)
+**Base URL: `task=/api/{projectId}/tasks`**
+
+| Method | Endpoint                | Description                |
+|--------|-------------------------|----------------------------|
+| POST   | `/task`                 | Create a new task          |
+| GET    | `/task/{taskId}`        | Get task details           |
+| GET    | `/task`                 | Get all tasks of a project |
+| PUT    | `/task/{taskId}`        | Update task details        |
+| DELETE | `/task/{taskId}`        | Delete task                |
+| PUT    | `/task/{taskId}/status` | Update task status         |
+| PUT    | `/task/{taskId}/assign` | Assign task to user        |
 
 
 ## 🙌 Author
