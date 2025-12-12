@@ -51,6 +51,11 @@ Additional services (Task, Billing, Notification, Gateway, etc.) will be added a
   - Spring Boot
   - Java
   - Postgresql
+- **Task Service**
+  - Spring Boot
+  - Java
+  - Postgresql
+  - RabbitMQ
 
 # Services Summary
 - **Auth Service**
