@@ -88,13 +88,6 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse updateTask(String taskId, UpdateTaskRequest request) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(()->new ResourceNotFoundException("Task not found"));
-        if (request.getAssignedToAuthId() != null && !request.getAssignedToAuthId().equals(task.getAssignedToAuthId())){
-            boolean isExistUser = userClient.getUserById(request.getAssignedToAuthId());
-            if(!isExistUser){
-                throw new ResourceNotFoundException("User not found");
-            }
-            task.setAssignedToAuthId(request.getAssignedToAuthId());
-        }
         updateIfNotNull(request.getTitle(),task::setTitle);
         updateIfNotNull(request.getDescription(),task::setDescription);
         updateIfNotNull(request.getDueDate(),task::setDueDate);

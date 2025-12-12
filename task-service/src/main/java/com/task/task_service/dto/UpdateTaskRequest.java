@@ -13,7 +13,6 @@ public class UpdateTaskRequest {
     private String description;
     private String priority;
     private OffsetDateTime dueDate;
-    private String assignedToAuthId;
     private List<String> tags;
     private Map<String, Object> attributes;
 }
