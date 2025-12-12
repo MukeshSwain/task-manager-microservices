@@ -10,7 +10,7 @@ import java.util.List;
 public interface TaskService {
     TaskResponse createTask(CreateTaskRequest request, String projectId, String authId);
     TaskResponse updateTask(String taskId, UpdateTaskRequest request);
-    void assignTask(String taskId, AssignTaskRequest request);
+    TaskResponse assignTask(String taskId, AssignTaskRequest request);
     TaskResponse changeTaskStatus(String taskId, ChangeTaskStatusRequest request);
     TaskResponse getTaskById(String taskId);
     @Transactional(readOnly = true)

@@ -6,6 +6,6 @@ public enum Status {
     DONE,
     ARCHIVED;
     public boolean isTerminal(){
-        return this == ARCHIVED;
+        return this == ARCHIVED || this == DONE;
     }
 }

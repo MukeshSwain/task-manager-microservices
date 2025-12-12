@@ -40,4 +40,8 @@ public class TaskController {
     public ResponseEntity<TaskResponse> changeTaskStatus(@PathVariable String taskId, @RequestBody ChangeTaskStatusRequest request){
         return new ResponseEntity<>(taskService.changeTaskStatus(taskId,request), HttpStatus.OK);
     }
+    @PutMapping("/{taskId}/assign")
+    public ResponseEntity<TaskResponse> assignTask(@PathVariable String taskId, @Valid @RequestBody AssignTaskRequest request){
+        return new ResponseEntity<>(taskService.assignTask(taskId,request), HttpStatus.OK);
+    }
 }

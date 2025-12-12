@@ -1,6 +1,7 @@
 package com.task.task_service.service.impl;
 
 import com.task.task_service.dto.*;
+import com.task.task_service.exception.BadRequestException;
 import com.task.task_service.exception.ResourceNotFoundException; // Assumed Custom Exception
 import com.task.task_service.feign.ProjectClient;
 import com.task.task_service.feign.UserClient;
@@ -107,17 +108,30 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @Transactional
-    public void assignTask(String taskId, AssignTaskRequest request) {
-
+    public TaskResponse assignTask(String taskId, AssignTaskRequest request) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(()-> new ResourceNotFoundException("Task not found!"));
+        if(task.getStatus().isTerminal()){
+            throw new BadRequestException("Task is " + task.getStatus() + " and cannot be reassigned.");
+        }
+        if(request.getAssignedToAuthId().equals(task.getAssignedToAuthId())){
+            return Mapper.toTaskresponse(task);
+        }
+        boolean isExistUser = userClient.getUserById(request.getAssignedToAuthId());
+        if (!isExistUser){
+            throw new ResourceNotFoundException("User not found!");
+        }
+        task.setAssignedToAuthId(request.getAssignedToAuthId());
+        Task updated = taskRepository.save(task);
+        return Mapper.toTaskresponse(updated);
     }
     @Override
     @Transactional
     public TaskResponse changeTaskStatus(String taskId, ChangeTaskStatusRequest request) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
-        if(task.getStatus().isTerminal()){
-            throw new ResourceNotFoundException("Task is already in terminal state");
+        if(task.getStatus() == Status.ARCHIVED){
+            throw new BadRequestException("Task is " + task.getStatus() + " and cannot be reassigned.");
         }
         Status newStatus = parseStatus(request.getStatus());
         task.setStatus(newStatus);
