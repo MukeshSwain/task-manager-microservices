@@ -153,6 +153,15 @@ public class TaskServiceImpl implements TaskService {
         return tasks.map(task -> Mapper.toTaskListResponse(task));
     }
 
+    @Override
+    public Void deleteTask(String taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(()-> new ResourceNotFoundException("Task not found!"));
+
+        taskRepository.deleteById(taskId);
+        return null;
+    }
+
     // Helper method to handle the hierarchy recursion
     private TaskResponse mapToTaskResponseRecursive(Task task) {
         TaskResponse response = Mapper.toTaskresponse(task);

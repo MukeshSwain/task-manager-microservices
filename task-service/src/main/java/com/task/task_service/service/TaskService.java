@@ -4,8 +4,6 @@ import com.task.task_service.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 
 public interface TaskService {
     TaskResponse createTask(CreateTaskRequest request, String projectId, String authId);
@@ -15,4 +13,5 @@ public interface TaskService {
     TaskResponse getTaskById(String taskId);
     @Transactional(readOnly = true)
     Page<TaskListResponse> getTasksByProject(String projectId, int page, int size);
+    Void deleteTask(String taskId);
 }
