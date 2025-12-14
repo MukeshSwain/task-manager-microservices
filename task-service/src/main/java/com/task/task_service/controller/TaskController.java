@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+@CrossOrigin(origins = "http://localhost:5173",
+        allowCredentials = "true")
 @RestController
 @RequestMapping("/api/{projectId}/tasks")
 public class TaskController {
