@@ -1,12 +1,10 @@
 package com.project.project_service.service.impl;
 
-import com.project.project_service.dto.CreateProjectRequest;
-import com.project.project_service.dto.MemberResponse;
-import com.project.project_service.dto.ProjectResponse;
-import com.project.project_service.dto.UpdateProjectRequest;
+import com.project.project_service.dto.*;
 import com.project.project_service.exception.BadRequestException;
 import com.project.project_service.exception.NotFoundException;
 import com.project.project_service.feign.TenantClient;
+import com.project.project_service.feign.UserClient;
 import com.project.project_service.mapping.Mapping;
 import com.project.project_service.model.*;
 import com.project.project_service.repository.ProjectMemberRepository;
@@ -18,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -26,12 +26,14 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository memberRepository;
     private final EntityManager entityManager;
+    private final UserClient userClient;
 
-    public ProjectServiceImpl(TenantClient tenantClient, ProjectRepository projectRepository, ProjectMemberRepository memberRepository, EntityManager entityManager) {
+    public ProjectServiceImpl(TenantClient tenantClient, ProjectRepository projectRepository, ProjectMemberRepository memberRepository, EntityManager entityManager, UserClient userClient) {
         this.tenantClient = tenantClient;
         this.projectRepository = projectRepository;
         this.memberRepository = memberRepository;
         this.entityManager = entityManager;
+        this.userClient = userClient;
     }
 
     @Override
@@ -114,14 +116,67 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectResponse> listByUser(String authId) {
-        List<ProjectMember> memberShips = memberRepository.findByAuthId(authId);
-        List<ProjectResponse> projects = memberShips.stream()
-                .map(member -> Mapping.toProjectResponse(projectRepository.findByIdAndDeletedFalse(member.getProjectId()))).toList();
+    public List<ProjectDetailResponse> listByUser(String authId) {
+        // 1. Fetch Projects (Database)
+        List<ProjectMember> memberships = memberRepository.findByAuthId(authId);
+        List<String> projectIds = memberships.stream().map(ProjectMember::getProjectId).toList();
 
-        return projects;
+        if (projectIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Project> projectList = projectRepository.findAllByIdInAndDeletedFalse(projectIds);
+
+        // 2. Collect ALL unique Auth IDs (Owner + TeamLead)
+        Set<String> userIdsToFetch = new HashSet<>();
+        projectList.forEach(p -> {
+            if (p.getOwnerAuthId() != null) userIdsToFetch.add(p.getOwnerAuthId());
+            if (p.getTeamLeadAuthId() != null) userIdsToFetch.add(p.getTeamLeadAuthId());
+        });
+
+        // 3. Batch Fetch Users (ONE Network Call)
+        // Assuming userClient.getUsersByIds returns a list of UserDTOs
+        List<UserDetail> users = userClient.getUsersByIds(new ArrayList<>(userIdsToFetch));
+
+        // 4. Convert List to Map for fast O(1) lookup
+        // Map<AuthId, UserResponse>
+        Map<String, UserDetail> userMap = users.stream()
+                .collect(Collectors.toMap(UserDetail::getAuthId, u -> u));
+
+        // 5. Map Projects to DTOs (In Memory - Very Fast)
+        return projectList.stream()
+                .map(project -> {
+                    UserDetail owner = userMap.get(project.getOwnerAuthId());
+                    UserDetail lead = userMap.get(project.getTeamLeadAuthId());
+
+                    return ProjectDetailResponse.builder()
+                            .id(project.getId())
+                            .name(project.getName())
+                            .description(project.getDescription())
+                            .status(project.getStatus().name())
+                            .orgId(project.getOrgId())
+                            .priority(project.getPriority().name())
+                            .deadline(project.getDeadline() != null ? project.getDeadline().toString() : null)
+                            .createdAt(project.getCreatedAt().toString())
+                            .updatedAt(project.getUpdatedAt().toString())
+                            // Map Owner
+                            .owner(owner != null ? ProjectDetailResponse.UserSummary.builder()
+                                    .authId(owner.getAuthId())
+                                    .name(owner.getName())
+                                    .email(owner.getEmail())
+                                    .avatarUrl(owner.getAvatarUrl())
+                                    .build() : null)
+                            // Map Team Lead
+                            .teamLead(lead != null ? ProjectDetailResponse.UserSummary.builder()
+                                    .authId(lead.getAuthId())
+                                    .name(lead.getName())
+                                    .email(lead.getEmail())
+                                    .avatarUrl(lead.getAvatarUrl())
+                                    .build() : null)
+                            .build();
+                })
+                .toList();
     }
-
     @Override
     @Transactional
     public ProjectResponse updateProject(String projectId, UpdateProjectRequest req, String performedBy) {

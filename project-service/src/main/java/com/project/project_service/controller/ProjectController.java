@@ -2,6 +2,7 @@ package com.project.project_service.controller;
 
 
 import com.project.project_service.dto.CreateProjectRequest;
+import com.project.project_service.dto.ProjectDetailResponse;
 import com.project.project_service.dto.ProjectResponse;
 import com.project.project_service.dto.UpdateProjectRequest;
 import com.project.project_service.service.ProjectService;
@@ -34,7 +35,7 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.listByOrg(orgId));
     }
     @GetMapping("/user/{authId}")
-    public ResponseEntity<List<ProjectResponse>> listByUser(@PathVariable String authId){
+    public ResponseEntity<List<ProjectDetailResponse>> listByUser(@PathVariable String authId){
         return ResponseEntity.ok(projectService.listByUser(authId));
     }
     @PutMapping("/{projectId}/{performedBy}")
