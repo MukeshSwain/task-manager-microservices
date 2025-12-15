@@ -28,12 +28,15 @@ public class Mapper {
         return TaskListResponse.builder()
                 .id(task.getId())
                 .title(task.getTitle())
-                .status(String.valueOf(task.getStatus().name()))
-                .priority(String.valueOf(task.getPriority().name()))
+                .status(task.getStatus().name())
+                .priority(task.getPriority().name())
                 .dueDate(task.getDueDate())
+                .description(task.getDescription())
                 .assignedToAuthId(task.getAssignedToAuthId())
-                .parentId(task.getProjectId())
+                .projectId(task.getProjectId())
                 .parentId(task.getParent()!=null ?task.getParent().getId():null)
+                .tags(task.getTags())
+                .attributes(task.getAttributes())
                 .build();
     }
 }
