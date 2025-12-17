@@ -183,5 +183,11 @@ public class OrganizationService {
     }
 
 
-
+    public Boolean validate(String orgId) {
+        Organization organization = organizationRepo.findById(orgId).orElse(null);
+        if(organization == null){
+            return false;
+        }
+        return true;
+    }
 }

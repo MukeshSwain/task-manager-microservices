@@ -37,5 +37,9 @@ public class OrganizationController {
     public ResponseEntity<List<RoleAndorgId>> getMyOrganizations(@RequestParam String authId){
         return ResponseEntity.ok(service.getMyOrganizations(authId));
     }
+    @GetMapping("/validate/{orgId}")
+    public ResponseEntity<Boolean> validate(@PathVariable String orgId){
+        return ResponseEntity.ok(service.validate(orgId));
+    }
 
 }
