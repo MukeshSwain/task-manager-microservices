@@ -162,6 +162,15 @@ public class TaskServiceImpl implements TaskService {
         return null;
     }
 
+    @Override
+    public Page<TaskResponse> getTasksByOrg(List<String> projectIds, Pageable pageable) {
+        if(projectIds == null || projectIds.isEmpty()){
+            return Page.empty(pageable);
+        }
+        Page<Task> taskPage = taskRepository.findAllByProjectIdIn(projectIds, pageable);
+        return taskPage.map(Mapper::toTaskresponse);
+    }
+
     // Helper method to handle the hierarchy recursion
     private TaskResponse mapToTaskResponseRecursive(Task task) {
         TaskResponse response = Mapper.toTaskresponse(task);
