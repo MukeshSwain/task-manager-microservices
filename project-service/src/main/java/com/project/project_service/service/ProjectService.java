@@ -1,9 +1,8 @@
 package com.project.project_service.service;
 
-import com.project.project_service.dto.CreateProjectRequest;
-import com.project.project_service.dto.ProjectDetailResponse;
-import com.project.project_service.dto.ProjectResponse;
-import com.project.project_service.dto.UpdateProjectRequest;
+import com.project.project_service.dto.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,4 +17,6 @@ public interface ProjectService {
     void softDeleteProject(String projectId);
 
     Boolean validate(String projectId);
+
+    Page<TaskResponse> getTasksByOrg(String orgId, Pageable pageable);
 }

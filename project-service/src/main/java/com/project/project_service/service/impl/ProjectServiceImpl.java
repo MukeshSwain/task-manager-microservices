@@ -3,6 +3,7 @@ package com.project.project_service.service.impl;
 import com.project.project_service.dto.*;
 import com.project.project_service.exception.BadRequestException;
 import com.project.project_service.exception.NotFoundException;
+import com.project.project_service.feign.TaskClient;
 import com.project.project_service.feign.TenantClient;
 import com.project.project_service.feign.UserClient;
 import com.project.project_service.mapping.Mapping;
@@ -12,6 +13,8 @@ import com.project.project_service.repository.ProjectRepository;
 import com.project.project_service.service.ProjectService;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +30,15 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMemberRepository memberRepository;
     private final EntityManager entityManager;
     private final UserClient userClient;
+    private final TaskClient taskClient;
 
-    public ProjectServiceImpl(TenantClient tenantClient, ProjectRepository projectRepository, ProjectMemberRepository memberRepository, EntityManager entityManager, UserClient userClient) {
+    public ProjectServiceImpl(TenantClient tenantClient, ProjectRepository projectRepository, ProjectMemberRepository memberRepository, EntityManager entityManager, UserClient userClient, TaskClient taskClient) {
         this.tenantClient = tenantClient;
         this.projectRepository = projectRepository;
         this.memberRepository = memberRepository;
         this.entityManager = entityManager;
         this.userClient = userClient;
+        this.taskClient = taskClient;
     }
 
     @Override
@@ -309,6 +314,30 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Boolean validate(String projectId) {
         return projectRepository.existsById(projectId);
+    }
+
+    @Override
+    public Page<TaskResponse> getTasksByOrg(String orgId, Pageable pageable) {
+        if (!tenantClient.validate(orgId)) {
+            throw new NotFoundException("Organization not found with id " + orgId);
+        }
+
+        // 2. Security Check: Fetch all valid Project IDs for this Org
+        List<String> validOrgProjectIds = projectRepository.findIdsByOrgIdAndDeletedFalse(orgId);
+
+        // UX Improvement: Return empty page instead of 404 if org has no projects
+        if (validOrgProjectIds.isEmpty()) {
+            log.info("No projects found for orgId: {}. Returning empty.", orgId);
+            return Page.empty(pageable);
+        }
+
+
+
+        log.info("Fetching task page {} for {} projects in Org {}", pageable.getPageNumber(), validOrgProjectIds.size(), orgId);
+
+        // 4. Call Downstream Client with Pagination
+        // Note: ensure your taskClient handles the Page return type correctly (see step 2 below)
+        return taskClient.getTasksByOrg(validOrgProjectIds,pageable);
     }
 
     private boolean notBlank(String s) {
