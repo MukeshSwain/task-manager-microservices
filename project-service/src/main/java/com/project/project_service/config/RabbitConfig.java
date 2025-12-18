@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfig {
-    public static final String EXCHANGE = "events.exchange";
+    public static final String PROJECT_EXCHANGE = "project.exchange";
 
     // Routing keys for all email events
     public static final String PROJECT_CREATED_KEY = "project.created";
