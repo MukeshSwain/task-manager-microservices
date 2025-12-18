@@ -2,6 +2,7 @@ package com.notification.notification_service.messaging;
 
 import com.notification.notification_service.config.RabbitConfig;
 import com.notification.notification_service.dto.EmailEvent;
+import com.notification.notification_service.dto.EmailRequest;
 import com.notification.notification_service.dto.UserInvitedEvent;
 import com.notification.notification_service.service.EmailService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,5 +44,12 @@ public class InvitationEmailListener {
         log.info("Member added event received: {}", event);
         emailService.sendMemberAdded(event);
         log.info("📤 Member added email sent to {}", event.getEmail());
+    }
+    @RabbitListener(queues = RabbitConfig.PROJECT_CREATED_QUEUE)
+    public void onProjectCreated(EmailRequest event){
+        log.info("Project created event received: {}", event);
+        emailService.sendProjectCreatedEmail(event);
+        log.info("email send successfully!");
+
     }
 }

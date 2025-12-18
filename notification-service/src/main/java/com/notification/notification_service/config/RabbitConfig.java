@@ -11,22 +11,37 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitConfig {
 
     public static final String EXCHANGE = "events.exchange";
+    public static final String PROJECT_EXCHANGE = "project.exchange";
 
     // Routing Keys
     public static final String INVITE_KEY = "email.invite";
     public static final String MEMBER_ADDED_KEY = "email.member.added";
     public static final String ROLE_UPDATED_KEY = "email.member.role.updated";
     public static final String MEMBER_REMOVED_KEY = "email.member.removed";
+    public static final String PROJECT_CREATED_KEY = "project.created";
 
     // Queues
     public static final String INVITE_QUEUE = "email.invite.queue";
     public static final String MEMBER_ADDED_QUEUE = "email.member.added.queue";
     public static final String ROLE_UPDATED_QUEUE = "email.member.role.updated.queue";
     public static final String MEMBER_REMOVED_QUEUE = "email.member.removed.queue";
+    public static final String PROJECT_CREATED_QUEUE = "project.created.queue";
 
+    // --- Exchanges ---
     @Bean
     public TopicExchange eventExchange() {
         return new TopicExchange(EXCHANGE);
+    }
+
+    @Bean
+    public TopicExchange projectExchange() {
+        return new TopicExchange(PROJECT_EXCHANGE);
+    }
+
+    // --- Queues ---
+    @Bean
+    public Queue projectQueue() {
+        return QueueBuilder.durable(PROJECT_CREATED_QUEUE).build();
     }
 
     @Bean
@@ -41,7 +56,17 @@ public class RabbitConfig {
     @Bean
     public Queue memberRemovedQueue() { return QueueBuilder.durable(MEMBER_REMOVED_QUEUE).build(); }
 
-    // Bindings
+    // --- Bindings ---
+
+    // ✅ ADDED THIS MISSING BINDING
+    // Connects project.created.queue -> project.exchange using "project.created" key
+    @Bean
+    public Binding projectBinding(Queue projectQueue, TopicExchange projectExchange) {
+        return BindingBuilder.bind(projectQueue)
+                .to(projectExchange)
+                .with(PROJECT_CREATED_KEY);
+    }
+
     @Bean
     public Binding inviteBinding(Queue inviteQueue, TopicExchange eventExchange) {
         return BindingBuilder.bind(inviteQueue).to(eventExchange).with(INVITE_KEY);
