@@ -157,6 +157,15 @@ public class MemberService {
         if(member == null){
             throw new NotFoundException("Member not found");
         }
-        return toMemberResponse(member);
+        EmailAndName emailAndName = userService.getEmailById(authId);
+        return MemberResponse.builder()
+                .name(emailAndName.getName())
+                .email(emailAndName.getEmail())
+                .role(member.getRole().name())
+                .authId(authId)
+                .orgId(orgId)
+                .joinedAt(member.getJoinedAt())
+                .id(member.getId())
+                .build();
     }
 }
