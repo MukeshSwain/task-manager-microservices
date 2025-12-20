@@ -3,11 +3,18 @@ package com.notification.notification_service.service;
 import com.notification.notification_service.dto.EmailEvent;
 import com.notification.notification_service.dto.EmailRequest;
 import com.notification.notification_service.dto.UserInvitedEvent;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Service
@@ -83,7 +90,63 @@ public class EmailService {
             // Optional: Throw exception if you want RabbitMQ to retry
         }
     }
+    public void sendProjectMemberAddedEmail(EmailRequest event) {
+        try {
+            log.info("1. Listener triggered!");
+            log.info("2. Payload received for: {}", event.getToEmail());
+            // Load HTML template
+            String htmlTemplate = loadEmailTemplate(event.getTemplateCode());
 
+            // Replace variables {{key}}
+            String processedHtml = replaceVariables(
+                    htmlTemplate,
+                    event.getVariables()
+            );
+
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(event.getToEmail());
+            helper.setSubject(event.getSubject());
+            helper.setText(processedHtml, true); // true = HTML
+
+            javaMailSender.send(message);
+
+            log.info("HTML project member added email sent to {}", event.getToEmail());
+
+        } catch (Exception e) {
+            log.error("Failed to send email to {}", event.getToEmail(), e);
+        }
+    }
+    private String loadEmailTemplate(String templateCode) throws IOException {
+        if (!templateCode.endsWith(".html")) {
+            templateCode += ".html";
+        }
+
+        ClassPathResource resource = new ClassPathResource("templates/" + templateCode);
+        // 3. Check if file exists (Optional but good for debugging)
+        if (!resource.exists()) {
+            throw new FileNotFoundException("Template file not found: templates/" + templateCode);
+        }
+
+        return StreamUtils.copyToString(
+                resource.getInputStream(),
+                StandardCharsets.UTF_8
+        );
+    }
+
+    private String replaceVariables(String template, Map<String, Object> variables) {
+        String result = template;
+
+        for (Map.Entry<String, Object> entry : variables.entrySet()) {
+            String placeholder = "{{" + entry.getKey() + "}}";
+            result = result.replace(
+                    placeholder,
+                    String.valueOf(entry.getValue())
+            );
+        }
+
+        return result;
+    }
     private String buildPlainTextBody(Map<String, Object> vars) {
         if (vars == null) return "A new project has been created.";
 
@@ -104,5 +167,4 @@ public class EmailService {
             The Project Management Team
             """, ownerName, projectName, link);
     }
-
 }

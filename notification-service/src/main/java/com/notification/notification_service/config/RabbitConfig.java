@@ -19,6 +19,7 @@ public class RabbitConfig {
     public static final String ROLE_UPDATED_KEY = "email.member.role.updated";
     public static final String MEMBER_REMOVED_KEY = "email.member.removed";
     public static final String PROJECT_CREATED_KEY = "project.created";
+    public static final String PROJECT_MEMBER_ADDED_KEY = "project.member.added";
 
     // Queues
     public static final String INVITE_QUEUE = "email.invite.queue";
@@ -26,6 +27,7 @@ public class RabbitConfig {
     public static final String ROLE_UPDATED_QUEUE = "email.member.role.updated.queue";
     public static final String MEMBER_REMOVED_QUEUE = "email.member.removed.queue";
     public static final String PROJECT_CREATED_QUEUE = "project.created.queue";
+    public static final String PROJECT_MEMBER_ADDED_QUEUE = "project.member.added.queue";
 
     // --- Exchanges ---
     @Bean
@@ -42,6 +44,10 @@ public class RabbitConfig {
     @Bean
     public Queue projectQueue() {
         return QueueBuilder.durable(PROJECT_CREATED_QUEUE).build();
+    }
+    @Bean
+    public Queue projectMemberAddedQueue() {
+        return QueueBuilder.durable(PROJECT_MEMBER_ADDED_QUEUE).build();
     }
 
     @Bean
@@ -67,6 +73,10 @@ public class RabbitConfig {
                 .with(PROJECT_CREATED_KEY);
     }
 
+    @Bean
+    public Binding projectMemberAddedBinding(Queue projectMemberAddedQueue, TopicExchange projectExchange) {
+        return BindingBuilder.bind(projectMemberAddedQueue).to(projectExchange).with(PROJECT_MEMBER_ADDED_KEY);
+    }
     @Bean
     public Binding inviteBinding(Queue inviteQueue, TopicExchange eventExchange) {
         return BindingBuilder.bind(inviteQueue).to(eventExchange).with(INVITE_KEY);
@@ -99,4 +109,5 @@ public class RabbitConfig {
         template.setMessageConverter(converter);
         return template;
     }
+
 }
