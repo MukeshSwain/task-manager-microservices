@@ -121,9 +121,6 @@ public class ProjectServiceImpl implements ProjectService {
                         .role(Role.LEAD)
                         .build());
             }
-
-            // --- 5. NOTIFICATIONS ---
-            // Wrapped in try-catch so email failures DO NOT rollback the successful DB transaction
             try {
                 // Notify Owner
                 sendCreationNotification(saved, owner, "Project Created Successfully");
@@ -395,7 +392,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .variables(emailVars)
                 .build();
 
-        notificationProducer.sendProjectCreatedEvent(emailEvent, RabbitConfig.PROJECT_CREATED_KEY);
+        notificationProducer.sendEvent(emailEvent, RabbitConfig.PROJECT_CREATED_KEY);
     }
 
     private boolean notBlank(String s) {

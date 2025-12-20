@@ -1,23 +1,21 @@
 package com.project.project_service.service.impl;
 
-import com.project.project_service.dto.AddMemberRequest;
-import com.project.project_service.dto.ProjectMemberResponse;
-import com.project.project_service.dto.UpdateMemberRoleRequest;
-import com.project.project_service.dto.UserDetail;
+import com.project.project_service.config.RabbitConfig;
+import com.project.project_service.dto.*;
 import com.project.project_service.exception.BadRequestException;
 import com.project.project_service.exception.NotFoundException;
 import com.project.project_service.feign.UserClient;
-import com.project.project_service.mapping.Mapping;
+import com.project.project_service.messaging.NotificationProducer;
 import com.project.project_service.model.Project;
 import com.project.project_service.model.ProjectMember;
 import com.project.project_service.model.Role;
 import com.project.project_service.repository.ProjectMemberRepository;
 import com.project.project_service.repository.ProjectRepository;
 import com.project.project_service.service.ProjectMemberService;
-import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,43 +27,83 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserClient userClient;
     private final ProjectRepository projectRepository;
-    private final EntityManager entityManager;
+    private final NotificationProducer notificationProducer;
 
-
-    public ProjectMemberServiceImpl(ProjectMemberRepository projectMemberRepository, UserClient userClient, ProjectRepository projectRepository, EntityManager entityManager) {
+    public ProjectMemberServiceImpl(ProjectMemberRepository projectMemberRepository, UserClient userClient, ProjectRepository projectRepository, NotificationProducer notificationProducer) {
         this.projectMemberRepository = projectMemberRepository;
         this.userClient = userClient;
         this.projectRepository = projectRepository;
-        this.entityManager = entityManager;
+        this.notificationProducer = notificationProducer;
+
     }
 
-    @Override
-    @Transactional
+    @Transactional // 1. Ensures data consistency (Atomicity)
     public ProjectMemberResponse addMember(String projectId, AddMemberRequest request, String performedBy) {
+
+        // 2. Use Optional for better null handling
         Project project = projectRepository.findByIdAndDeletedFalse(projectId);
-        if (project == null){
+        if(project == null){
             throw new NotFoundException("Project not found!");
         }
+
+        // 3. Optimize: Ensure DB has index on (projectId, authId)
         ProjectMember actor = projectMemberRepository.findByProjectIdAndAuthId(projectId, performedBy);
-        if(actor.getRole() != Role.OWNER){
+        if (actor == null || actor.getRole() != Role.OWNER) {
             throw new BadRequestException("Only owner can add members");
         }
-        if(projectMemberRepository.findByProjectIdAndAuthId(projectId, request.getAuthId())!=null){
+
+        // 4. existsBy is faster than findBy if you don't need the object
+        if (projectMemberRepository.existsByProjectIdAndAuthId(projectId, request.getAuthId())) {
             throw new BadRequestException("Member already exists!");
         }
+
         ProjectMember projectMember = ProjectMember.builder()
                 .projectId(projectId)
                 .authId(request.getAuthId())
                 .role(Role.valueOf(request.getRole().toUpperCase()))
-                .build();
+                .build(); // Ensure @CreationTimestamp is in Entity so we don't need refresh()
 
-        ProjectMember savedProjectMember = projectMemberRepository.saveAndFlush(projectMember);
-        entityManager.refresh(savedProjectMember);
-        project.setMemberCount(project.getMemberCount()+1);
+        ProjectMember savedProjectMember = projectMemberRepository.save(projectMember);
+
+        // Update count
+        project.setMemberCount(project.getMemberCount() + 1);
         projectRepository.save(project);
-        UserDetail user = userClient.getUserById(request.getAuthId());
 
-        //Todo : notification
+        // Fetch User Details
+        List<String> authIds = List.of(request.getAuthId(), performedBy);
+        Map<String, UserDetail> userMap = new HashMap<>();
+
+        // Safe check for external service response
+        List<UserDetail> users = userClient.getUsersByIds(authIds);
+        if (users != null) {
+            users.forEach(u -> userMap.put(u.getAuthId(), u));
+        }
+
+        UserDetail user = userMap.get(request.getAuthId());
+        UserDetail performedByUser = userMap.get(performedBy);
+
+        if (user == null || performedByUser == null) {
+            throw new BadRequestException("Failed to fetch user details for notification");
+        }
+
+        // Prepare Notification
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setToEmail(user.getEmail());
+        emailRequest.setSubject("You’ve been added to a project");
+        emailRequest.setTemplateCode("project-member-added.html");
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("memberName", user.getName());
+        variables.put("projectName", project.getName());
+        variables.put("addedByName", performedByUser.getName());
+        variables.put("role", savedProjectMember.getRole());
+        // 5. Inject this value instead of hardcoding
+        variables.put("projectLink", "http://localhost:5173");
+        variables.put("productName", "Task Management Team");
+        emailRequest.setVariables(variables);
+
+        // 6. Renamed method for clarity
+        notificationProducer.sendEvent(emailRequest, RabbitConfig.PROJECT_MEMBER_ADDED_KEY);
 
         return ProjectMemberResponse.builder()
                 .id(savedProjectMember.getId())
@@ -73,7 +111,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
                 .role(savedProjectMember.getRole())
                 .joinedAt(savedProjectMember.getJoinedAt())
                 .user(ProjectMemberResponse.UserSummary.builder()
-                        .authId(savedProjectMember.getAuthId())
+                        .authId(user.getAuthId())
                         .name(user.getName())
                         .email(user.getEmail())
                         .avatarUrl(user.getAvatarUrl())
@@ -81,7 +119,6 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
                         .build())
                 .build();
     }
-
     @Override
     @Transactional
     public void removeMember(String projectId, String authId, String performedBy) {

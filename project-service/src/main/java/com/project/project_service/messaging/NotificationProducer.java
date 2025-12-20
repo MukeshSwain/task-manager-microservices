@@ -12,7 +12,8 @@ public class NotificationProducer {
     public NotificationProducer(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
-    public void sendProjectCreatedEvent(EmailRequest event,String routingKey){
-        rabbitTemplate.convertAndSend(RabbitConfig.PROJECT_EXCHANGE, RabbitConfig.PROJECT_CREATED_KEY, event);
+    public void sendEvent(EmailRequest event,String routingKey){
+        rabbitTemplate.convertAndSend(RabbitConfig.PROJECT_EXCHANGE, routingKey, event);
     }
+
 }
