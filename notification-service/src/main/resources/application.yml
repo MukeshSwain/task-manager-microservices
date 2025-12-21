@@ -21,10 +21,25 @@ spring:
     username: ${USER_NAME}
     password: ${USER_PASSWORD}
     properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
-  # For JSON conversion
   jackson:
     serialization:
       indent_output: true
+
+app:
+  rabbitmq:
+    queue:
+      project-created: project.created.queue
+      project-member-added: project.member.added.queue
+      invite: email.invite.queue
+      member-added: email.member.added.queue
+      role-updated: email.member.role.updated.queue
+      member-removed: email.member.removed.queue
+    exchange:
+      events: events.exchange
+      project: project.exchange

@@ -15,11 +15,11 @@ public class ProjectListener {
     public ProjectListener(EmailService emailService) {
         this.emailService = emailService;
     }
-    @RabbitListener(queues = RabbitConfig.PROJECT_CREATED_QUEUE)
+    @RabbitListener(queues = "${app.rabbitmq.queue.project-created}")
     public void handleProjectCreatedEvent(EmailRequest event) {
         emailService.sendProjectCreatedEmail(event);
     }
-    @RabbitListener(queues = RabbitConfig.PROJECT_MEMBER_ADDED_QUEUE)
+    @RabbitListener(queues = "${app.rabbitmq.queue.project-member-added}")
     public void handleProjectMemberAddedEvent(EmailRequest event) {
         log.info("1. Listener triggered!");
         log.info("2. Payload received for: {}", event.getToEmail());
