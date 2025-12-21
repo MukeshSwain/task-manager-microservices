@@ -11,15 +11,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor // Clean way to generate constructor for final fields
-// 1. Rename to reflect that it handles ALL notifications, not just invites
+@RequiredArgsConstructor
 public class InvitationEmailListener {
-
     private final EmailService emailService;
-
-    // 2. Use Property Placeholders ("${...}")
-    // This allows you to change queue names in application.properties without recompiling code.
-    // It matches the config we created in the previous step.
 
     @RabbitListener(queues = "${app.rabbitmq.queue.invite}")
     public void onUserInvited(UserInvitedEvent event) {
@@ -50,8 +44,4 @@ public class InvitationEmailListener {
         log.info("📧 Received Project Created Event for: {}", event.getToEmail());
         emailService.sendProjectCreatedEmail(event);
     }
-
-    // Note: We REMOVED the "log.info('sent successfully')" after the service call.
-    // Why? Because if the service fails, it throws an exception, and the log never happens.
-    // The Logging inside the Service (or an AOP Aspect) is a better place for "Success" logs.
 }

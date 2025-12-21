@@ -26,4 +26,8 @@ public class ProjectListener {
         emailService.sendProjectMemberAddedEmail(event);
         log.info("3. Email sent successfully to: {}", event.getToEmail());
     }
+    @RabbitListener(queues = "${app.rabbitmq.queue.new-lead-assigned}")
+    public void handleNewLeadAssignedEvent(EmailRequest event){
+        emailService.sendNewLeadAssigned(event);
+    }
 }

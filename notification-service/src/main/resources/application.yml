@@ -40,6 +40,7 @@ app:
       member-added: email.member.added.queue
       role-updated: email.member.role.updated.queue
       member-removed: email.member.removed.queue
+      new-lead-assigned: project.new.lead.assigned.queue
     exchange:
       events: events.exchange
       project: project.exchange

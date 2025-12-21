@@ -70,24 +70,51 @@ public class EmailService {
     }
     public void sendProjectCreatedEmail(EmailRequest event) {
         try {
-            SimpleMailMessage msg = new SimpleMailMessage();
+            log.info("1. Listener triggered!");
+            log.info("2. Payload received for: {}", event.getToEmail());
+            // Load HTML template
+            String htmlTemplate = loadEmailTemplate(event.getTemplateCode());
 
-            // 1. Set Basic Info
-            msg.setTo(event.getToEmail());
-            msg.setSubject(event.getSubject());
-            msg.setFrom("no-reply@yourcompany.com"); // Good practice to set a sender
+            // Replace variables {{key}}
+            String processedHtml = replaceVariables(
+                    htmlTemplate,
+                    event.getVariables()
+            );
 
-            // 2. Construct the Message Body from Variables
-            String body = buildPlainTextBody(event.getVariables());
-            msg.setText(body);
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(event.getToEmail());
+            helper.setSubject(event.getSubject());
+            helper.setText(processedHtml, true); // true = HTML
 
-            // 3. Send
-            javaMailSender.send(msg);
-            log.info("Email sent successfully to {}", event.getToEmail());
+            javaMailSender.send(message);
+
 
         } catch (Exception e) {
             log.error("Failed to send email to {}", event.getToEmail(), e);
             // Optional: Throw exception if you want RabbitMQ to retry
+        }
+    }
+    public void sendNewLeadAssigned(EmailRequest event){
+
+        try{
+            log.info("1. Listener triggered!");
+            log.info("2. Payload received for: {}", event.getToEmail());
+            String htmlTemplate = loadEmailTemplate(event.getTemplateCode());
+            String processedHtml = replaceVariables(
+                    htmlTemplate,
+                    event.getVariables()
+            );
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message,true, "UTF-8");
+            helper.setTo(event.getToEmail());
+            helper.setSubject(event.getSubject());
+            helper.setText(processedHtml, true);
+
+            javaMailSender.send(message);
+            log.info("New lead assigned email has been sent!");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
     public void sendProjectMemberAddedEmail(EmailRequest event) {
