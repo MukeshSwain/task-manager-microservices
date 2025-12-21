@@ -32,62 +32,32 @@ public class ProjectServiceImpl implements ProjectService {
     private final TenantClient tenantClient;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository memberRepository;
-    private final EntityManager entityManager;
     private final UserClient userClient;
     private final TaskClient taskClient;
     private final NotificationProducer notificationProducer;
 
 
 
-    public ProjectServiceImpl(TenantClient tenantClient, ProjectRepository projectRepository, ProjectMemberRepository memberRepository, EntityManager entityManager, UserClient userClient, TaskClient taskClient, NotificationProducer notificationProducer) {
+    public ProjectServiceImpl(TenantClient tenantClient, ProjectRepository projectRepository, ProjectMemberRepository memberRepository, UserClient userClient, TaskClient taskClient, NotificationProducer notificationProducer) {
         this.tenantClient = tenantClient;
         this.projectRepository = projectRepository;
         this.memberRepository = memberRepository;
-        this.entityManager = entityManager;
         this.userClient = userClient;
         this.taskClient = taskClient;
         this.notificationProducer = notificationProducer;
     }
-
     @Override
-    @Transactional // CRITICAL: Ensures DB integrity if any save fails
+    @Transactional
     public ProjectResponse createProject(CreateProjectRequest req) {
-        // --- 1. VALIDATION ---
+
         MemberResponse owner = tenantClient.getMember(req.getOrgId(), req.getOwnerAuthId());
-        if (owner == null) {
-            throw new NotFoundException("Owner not found in organization");
-        }
+        if (owner == null) throw new NotFoundException("Owner not found in organization");
 
-        // Fixed logging bug (was logging Name as Role)
-        log.info("Owner: {}, Role: {}", owner.getEmail(), owner.getRole());
-
-        if (owner.getRole() == null) {
-            throw new BadRequestException("Owner has no role assigned");
-        }
-
-        try {
-            Role ownerRole = Role.valueOf(owner.getRole().toUpperCase());
-            if (ownerRole != Role.ADMIN && ownerRole != Role.OWNER) {
-                throw new BadRequestException("You are not authorized to create a project");
-            }
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid role format: " + owner.getRole());
-        }
-
-        // --- 2. FETCH TEAM LEAD ---
+        validateOwnerRole(owner);
         boolean isSameUser = req.getOwnerAuthId().equals(req.getTeamLeadAuthId());
-        MemberResponse teamLead;
+        MemberResponse teamLead = isSameUser ? owner : tenantClient.getMember(req.getOrgId(), req.getTeamLeadAuthId());
 
-        if (isSameUser) {
-            teamLead = owner;
-        } else {
-            teamLead = tenantClient.getMember(req.getOrgId(), req.getTeamLeadAuthId());
-            if (teamLead == null) {
-                throw new NotFoundException("Team lead not found in organization");
-            }
-        }
-
-        // --- 3. BUILD & SAVE PROJECT ---
+        if (teamLead == null) throw new NotFoundException("Team lead not found in organization");
         try {
             Project project = Project.builder()
                     .name(req.getName())
@@ -95,52 +65,54 @@ public class ProjectServiceImpl implements ProjectService {
                     .orgId(req.getOrgId())
                     .ownerAuthId(req.getOwnerAuthId())
                     .teamLeadAuthId(req.getTeamLeadAuthId())
-                    // Safe Enum Parsing
                     .priority(Priority.valueOf(req.getPriority().toUpperCase()))
                     .status(Status.valueOf(req.getStatus().toUpperCase()))
                     .deadline(req.getDeadline())
                     .memberCount(isSameUser ? 1 : 2)
                     .build();
 
-            Project saved = projectRepository.saveAndFlush(project);
-            entityManager.refresh(saved);
-
-            // --- 4. SAVE MEMBERS (Inline) ---
-            // Save Owner
-            memberRepository.save(ProjectMember.builder()
-                    .projectId(saved.getId())
-                    .authId(req.getOwnerAuthId())
-                    .role(Role.OWNER)
-                    .build());
-
-            // Save Team Lead (if different)
+            Project saved = projectRepository.save(project);
+            saveProjectMember(saved.getId(), req.getOwnerAuthId(), Role.OWNER);
             if (!isSameUser) {
-                memberRepository.save(ProjectMember.builder()
-                        .projectId(saved.getId())
-                        .authId(req.getTeamLeadAuthId())
-                        .role(Role.LEAD)
-                        .build());
+                saveProjectMember(saved.getId(), req.getTeamLeadAuthId(), Role.LEAD);
             }
             try {
-                // Notify Owner
-                sendCreationNotification(saved, owner, "Project Created Successfully");
-
-                // Notify Team Lead (if different)
+                sendCreationNotification(saved, owner, "Project Created Successfully",
+                        "Your new project has been successfully initialized.", owner.getName(), teamLead.getName());
                 if (!isSameUser) {
-                    sendCreationNotification(saved, teamLead, "You have been assigned as Team Lead");
+                    sendCreationNotification(saved, teamLead, "New Assignment: Team Lead",
+                            "You have been assigned as the Team Lead for a new project.", owner.getName(), teamLead.getName());
                 }
             } catch (Exception e) {
-                log.error("Project created, but failed to send notifications", e);
+                log.error("Project created but notification failed", e);
             }
 
             return Mapping.toProjectResponse(saved);
 
         } catch (IllegalArgumentException e) {
-            // Catches invalid Priority/Status enum errors
             throw new BadRequestException("Invalid Priority or Status value provided");
         }
     }
 
+    private void saveProjectMember(String projectId, String authId, Role role) {
+        memberRepository.save(ProjectMember.builder()
+                .projectId(projectId)
+                .authId(authId)
+                .role(role)
+                .build());
+    }
+
+    private void validateOwnerRole(MemberResponse owner) {
+        if (owner.getRole() == null) throw new BadRequestException("Owner has no role assigned");
+        try {
+            Role role = Role.valueOf(owner.getRole().toUpperCase());
+            if (role != Role.ADMIN && role != Role.OWNER) {
+                throw new BadRequestException("You are not authorized to create a project");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid role format: " + owner.getRole());
+        }
+    }
     @Override
     public ProjectResponse getProject(String projectId) {
         Project project = projectRepository.findByIdAndDeletedFalse(projectId);
@@ -376,22 +348,33 @@ public class ProjectServiceImpl implements ProjectService {
         // Note: ensure your taskClient handles the Page return type correctly (see step 2 below)
         return taskClient.getTasksByOrg(validOrgProjectIds,pageable);
     }
-    private void sendCreationNotification(Project project, MemberResponse recipient, String subjectSuffix) {
+    private void sendCreationNotification(Project project, MemberResponse recipient, String subject,
+                                          String messageBody, String ownerName, String leadName) {
+
+        // 1. Construct URL properly using injected value
         String dashboardUrl = String.format("http://localhost:5173/orgs/%s/projects", project.getOrgId());
+
+        // 2. Map variables for the HTML template
         Map<String, Object> emailVars = new HashMap<>();
         emailVars.put("recipientName", recipient.getName());
+        emailVars.put("messageBody", messageBody);
         emailVars.put("projectName", project.getName());
         emailVars.put("projectId", project.getId());
-        emailVars.put("ownerName", recipient.getName());
+        emailVars.put("priority", project.getPriority().toString());
+        emailVars.put("deadline", project.getDeadline().toString());
+        emailVars.put("ownerName", ownerName);
+        emailVars.put("teamLeadName", leadName);
         emailVars.put("dashboardLink", dashboardUrl);
 
+        // 3. Build Request
         EmailRequest emailEvent = EmailRequest.builder()
                 .toEmail(recipient.getEmail())
-                .subject("Project Notification: " + subjectSuffix)
-                .templateCode("PROJECT_CREATION_TEMPLATE")
+                .subject("Project Update: " + subject)
+                .templateCode("project-created") // Matches filename project-created.html
                 .variables(emailVars)
                 .build();
 
+        // 4. Send to Queue
         notificationProducer.sendEvent(emailEvent, RabbitConfig.PROJECT_CREATED_KEY);
     }
 
