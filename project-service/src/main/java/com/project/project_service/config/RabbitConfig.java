@@ -13,6 +13,7 @@ public class RabbitConfig {
     // Routing keys for all email events
     public static final String PROJECT_CREATED_KEY = "project.created";
     public static final String PROJECT_MEMBER_ADDED_KEY = "project.member.added";
+    public static final String PROJECT_ASSIGNED_KEY = "project.assigned";
 
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {
