@@ -31,6 +31,7 @@ public class Mapper {
                 .status(task.getStatus().name())
                 .priority(task.getPriority().name())
                 .dueDate(task.getDueDate())
+                .createdByAuthId(task.getCreatedByAuthId())
                 .description(task.getDescription())
                 .assignedToAuthId(task.getAssignedToAuthId())
                 .projectId(task.getProjectId())

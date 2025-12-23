@@ -20,6 +20,7 @@ public class TaskListResponse {
     private String priority;
 
     private OffsetDateTime dueDate;
+    private String createdByAuthId;
 
     private String assignedToAuthId;
     private List<String> tags;

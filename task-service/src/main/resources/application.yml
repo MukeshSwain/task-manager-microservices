@@ -15,3 +15,13 @@ spring:
     properties:
       hibernate:
         formate_sql: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+app:
+  rabbitmq:
+    exchange: task-exchange
+    routing-key: task-assigned
