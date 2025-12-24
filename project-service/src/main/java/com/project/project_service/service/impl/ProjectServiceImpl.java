@@ -191,40 +191,39 @@ public class ProjectServiceImpl implements ProjectService {
                 })
                 .toList();
     }
+
     @Override
     @Transactional
     public ProjectResponse updateProject(String projectId, UpdateProjectRequest req, String performedBy) {
-        Project project = projectRepository.findByIdAndDeletedFalse(projectId);
-        if (project == null) {
-            throw new NotFoundException("Project not found");
-        }
-        MemberResponse actor = tenantClient.getMember(project.getOrgId(), performedBy);
-        if (actor == null) {
-            throw new NotFoundException("User not found");
-        }
 
-        Role actorRole;
+        // --- 1. VALIDATION ---
+        Project project = projectRepository.findByIdAndDeletedFalse(projectId);
+        if (project == null) throw new NotFoundException("Project not found");
+
+        MemberResponse actor = tenantClient.getMember(project.getOrgId(), performedBy);
+        if (actor == null) throw new NotFoundException("User not found");
+
+        // Validate Permissions (Admin or Owner only)
         try {
-            actorRole = Role.valueOf(actor.getRole().toUpperCase());
+            Role actorRole = Role.valueOf(actor.getRole().toUpperCase());
+            if (actorRole != Role.ADMIN && actorRole != Role.OWNER) {
+                throw new BadRequestException("You are not authorized to update this project");
+            }
         } catch (Exception e) {
             throw new BadRequestException("Invalid or missing role for user");
         }
 
-        if (actorRole != Role.ADMIN && actorRole != Role.OWNER) {
-            throw new BadRequestException("You are not authorized to update this project");
-        }
-
         boolean changed = false;
-        if (notBlank(req.getName()) && !req.getName().equals(project.getName())) {
+
+        // --- 2. UPDATE BASIC FIELDS ---
+        if (req.getName() != null && !req.getName().equals(project.getName())) {
             project.setName(req.getName());
             changed = true;
         }
-
-        if (notBlank(req.getDescription()) && !req.getDescription().equals(project.getDescription())) {
+        if (req.getDescription() != null && !req.getDescription().equals(project.getDescription())) {
             project.setDescription(req.getDescription());
             changed = true;
         }
-
         if (req.getPriority() != null) {
             try {
                 Priority p = Priority.valueOf(req.getPriority().toUpperCase());
@@ -233,10 +232,9 @@ public class ProjectServiceImpl implements ProjectService {
                     changed = true;
                 }
             } catch (IllegalArgumentException ex) {
-                throw new BadRequestException("Invalid Priority value: " + req.getPriority());
+                throw new BadRequestException("Invalid Priority value");
             }
         }
-
         if (req.getStatus() != null) {
             try {
                 Status s = Status.valueOf(req.getStatus().toUpperCase());
@@ -245,59 +243,92 @@ public class ProjectServiceImpl implements ProjectService {
                     changed = true;
                 }
             } catch (IllegalArgumentException ex) {
-                throw new BadRequestException("Invalid Status value: " + req.getStatus());
+                throw new BadRequestException("Invalid Status value");
             }
         }
-
         if (req.getDeadline() != null && !req.getDeadline().equals(project.getDeadline())) {
             project.setDeadline(req.getDeadline());
             changed = true;
         }
-        if (req.getTeamLeadAuthId() != null &&
-                !req.getTeamLeadAuthId().equals(project.getTeamLeadAuthId())) {
-            MemberResponse newLeadResp = tenantClient.getMember(project.getOrgId(), req.getTeamLeadAuthId());
-            if (newLeadResp == null) {
-                throw new BadRequestException("New Team Lead must be a member of the organization");
-            }
+
+        // --- 3. TEAM LEAD SWAP LOGIC ---
+        // We only run this block (and send the email) if the Lead ID is actually different
+        if (req.getTeamLeadAuthId() != null && !req.getTeamLeadAuthId().equals(project.getTeamLeadAuthId())) {
 
             String oldLeadId = project.getTeamLeadAuthId();
             String newLeadId = req.getTeamLeadAuthId();
 
-            ProjectMember oldLead = memberRepository.findByProjectIdAndAuthId(projectId, oldLeadId);
+            MemberResponse newLeadResp = tenantClient.getMember(project.getOrgId(), newLeadId);
+            if (newLeadResp == null) {
+                throw new BadRequestException("New Team Lead must be a member of the organization");
+            }
+
+            // A. Demote Old Lead (if not Owner)
             if (!oldLeadId.equals(project.getOwnerAuthId())) {
-                // Old lead is NOT owner → demote to collaborator
+                ProjectMember oldLead = memberRepository.findByProjectIdAndAuthId(projectId, oldLeadId);
                 if (oldLead != null) {
                     oldLead.setRole(Role.COLLABORATOR);
                     memberRepository.save(oldLead);
                 }
             } else {
+                // If Old Lead was Owner, ensure they stay Owner (Owner > Lead)
+                ProjectMember oldLead = memberRepository.findByProjectIdAndAuthId(projectId, oldLeadId);
                 if (oldLead != null && oldLead.getRole() != Role.OWNER) {
                     oldLead.setRole(Role.OWNER);
                     memberRepository.save(oldLead);
                 }
             }
-            if (!newLeadId.equals(project.getOwnerAuthId())) {
 
-                ProjectMember newLeadMember =
-                        memberRepository.findByProjectIdAndAuthId(projectId, newLeadId);
+            // B. Promote New Lead
+            if (!newLeadId.equals(project.getOwnerAuthId())) {
+                ProjectMember newLeadMember = memberRepository.findByProjectIdAndAuthId(projectId, newLeadId);
 
                 if (newLeadMember == null) {
+                    // Create new member entry
                     newLeadMember = ProjectMember.builder()
                             .projectId(projectId)
                             .authId(newLeadId)
                             .role(Role.LEAD)
                             .build();
-
                     memberRepository.save(newLeadMember);
                     project.setMemberCount(project.getMemberCount() + 1);
                 } else {
+                    // Update existing member
                     newLeadMember.setRole(Role.LEAD);
                     memberRepository.save(newLeadMember);
                 }
             }
+
             project.setTeamLeadAuthId(newLeadId);
             changed = true;
+
+            // --- 4. SEND EMAIL NOTIFICATION (Only when Lead changes) ---
+            try {
+                EmailRequest emailRequest = new EmailRequest();
+                Map<String, Object> emailVars = new HashMap<>();
+
+                String dashboardUrl = String.format("http://localhost:5173/orgs/%s/projects", project.getOrgId());
+
+                emailVars.put("projectName", project.getName());
+                emailVars.put("performedBy", actor.getName());
+                emailVars.put("dashboardLink", dashboardUrl);
+                emailVars.put("recipientName", newLeadResp.getName());
+                emailVars.put("dueDate", project.getDeadline() != null ? project.getDeadline().toString() : "No Deadline");
+
+                emailRequest.setSubject("New Assignment: You are now Team Lead");
+                emailRequest.setTemplateCode("new-lead-assigned"); // Matches new-lead-assigned.html
+                emailRequest.setVariables(emailVars);
+                emailRequest.setToEmail(newLeadResp.getEmail());
+
+                // Use the dedicated Routing Key
+                notificationProducer.sendEvent(emailRequest, RabbitConfig.NEW_LEAD_ASSIGNED_KEY);
+
+            } catch (Exception e) {
+                log.error("Failed to send Team Lead notification email", e);
+                // We do NOT throw exception here; we let the DB update succeed.
+            }
         }
+
         if (!changed) {
             return Mapping.toProjectResponse(project);
         }
@@ -307,7 +338,6 @@ public class ProjectServiceImpl implements ProjectService {
 
         return Mapping.toProjectResponse(saved);
     }
-
     @Override
     @Transactional
     public void softDeleteProject(String projectId) {
@@ -362,8 +392,8 @@ public class ProjectServiceImpl implements ProjectService {
         emailVars.put("projectId", project.getId());
         emailVars.put("priority", project.getPriority().toString());
         emailVars.put("deadline", project.getDeadline().toString());
-        emailVars.put("ownerName", ownerName);
-        emailVars.put("teamLeadName", leadName);
+        emailVars.put("ownerName", ownerName);     // Passed explicitly so it's accurate
+        emailVars.put("teamLeadName", leadName);   // Passed explicitly
         emailVars.put("dashboardLink", dashboardUrl);
 
         // 3. Build Request
