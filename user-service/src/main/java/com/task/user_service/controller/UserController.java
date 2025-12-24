@@ -30,8 +30,9 @@ public class UserController {
     public ResponseEntity<String> createUser(@RequestBody UserRequest user){
         return ResponseEntity.ok(userService.createUser(user));
     }
-    @PutMapping("/{authId}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable String authId, @RequestBody UserProfileUpdateRequest request){
+    @PutMapping()
+    public ResponseEntity<UserResponse> updateUser(@RequestBody UserProfileUpdateRequest request){
+        String authId = getCurrentUserAuthId();
         return ResponseEntity.ok(userService.updateUser(authId, request));
     }
 
