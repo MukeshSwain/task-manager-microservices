@@ -41,6 +41,8 @@ app:
       role-updated: email.member.role.updated.queue
       member-removed: email.member.removed.queue
       new-lead-assigned: project.new.lead.assigned.queue
+      task-assigned: task.assigned.queue
     exchange:
       events: events.exchange
       project: project.exchange
+      task: task.exchange

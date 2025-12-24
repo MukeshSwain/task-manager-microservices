@@ -24,6 +24,9 @@ public class RabbitConfig {
     @Value("${app.rabbitmq.exchange.project}")
     private String projectExchangeName;
 
+    @Value("${app.rabbitmq.exchange.task}")
+    private String taskExchangeName;
+
     // --- Queue Names (Project) ---
     @Value("${app.rabbitmq.queue.project-created}")
     private String projectCreatedQueue;
@@ -47,6 +50,9 @@ public class RabbitConfig {
     @Value("${app.rabbitmq.queue.new-lead-assigned}")
     private String newLeadAssignedQueue;
 
+    @Value("${app.rabbitmq.queue.task-assigned}")
+    private String taskAssignedQueue;
+
     // --- Routing Keys ---
     public static final String PROJECT_CREATED_KEY = "project.created";
     public static final String PROJECT_MEMBER_ADDED_KEY = "project.member.added";
@@ -57,6 +63,7 @@ public class RabbitConfig {
     public static final String MEMBER_REMOVED_KEY = "email.member.removed";
     public static final String ROLE_UPDATED_KEY = "email.member.role.updated";
     public static final String NEW_LEAD_ASSIGNED_KEY = "project.new.lead.assigned";
+    public static final String TASK_ASSIGNED_KEY = "task.assigned";
 
     // --- DLQ Constants ---
     public static final String DLQ_EXCHANGE = "dead-letter.exchange";
@@ -74,6 +81,11 @@ public class RabbitConfig {
     @Bean
     public TopicExchange projectExchange() {
         return new TopicExchange(projectExchangeName);
+    }
+
+    @Bean
+    public TopicExchange taskExchange() {
+        return new TopicExchange(taskExchangeName);
     }
 
     @Bean
@@ -125,6 +137,9 @@ public class RabbitConfig {
     @Bean public Queue roleUpdatedQueue() { return createQueueWithDlq(roleUpdatedQueue, ROLE_UPDATED_KEY); }
     @Bean public Queue roleUpdatedQueueDlq() { return createDlq(roleUpdatedQueue); }
 
+    @Bean public Queue taskAssignedQueue() { return createQueueWithDlq(taskAssignedQueue, TASK_ASSIGNED_KEY); }
+    @Bean public Queue taskAssignedQueueDlq() { return createDlq(taskAssignedQueue); }
+
     // ----------------------------------------------------------------
     // 4. BINDINGS
     // ----------------------------------------------------------------
@@ -154,6 +169,15 @@ public class RabbitConfig {
     @Bean
     public Binding projectMemberAddedDlqBinding() {
         return BindingBuilder.bind(projectMemberAddedQueueDlq()).to(deadLetterExchange()).with(PROJECT_MEMBER_ADDED_KEY);
+    }
+
+    @Bean
+    public Binding taskAssignedBinding(){
+        return BindingBuilder.bind(taskAssignedQueue()).to(taskExchange()).with(TASK_ASSIGNED_KEY);
+    }
+    @Bean
+    public Binding taskAssignedDlqBinding(){
+        return BindingBuilder.bind(taskAssignedQueueDlq()).to(deadLetterExchange()).with(TASK_ASSIGNED_KEY);
     }
 
     // --- ✅ ADDED: EMAIL BINDINGS (Bound to eventExchange) ---

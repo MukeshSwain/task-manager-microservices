@@ -2,6 +2,7 @@ package com.notification.notification_service.service;
 
 import com.notification.notification_service.dto.EmailEvent;
 import com.notification.notification_service.dto.EmailRequest;
+import com.notification.notification_service.dto.TaskAssignedEvent;
 import com.notification.notification_service.dto.UserInvitedEvent;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,8 @@ import org.springframework.util.StreamUtils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -193,5 +196,58 @@ public class EmailService {
             Best regards,
             The Project Management Team
             """, ownerName, projectName, link);
+    }
+
+// ... inside EmailService class
+
+    public void sendTaskAssignedEmail(TaskAssignedEvent event) {
+        try {
+            log.info("1. Task Assigned Listener triggered!");
+            log.info("2. Processing email for user: {}", event.getUserEmail());
+
+            // 1. Define the template file name
+            // Ensure 'src/main/resources/templates/task-assigned.html' exists
+            String templateCode = "task-assigned";
+
+            // 2. Load HTML template using your existing helper method
+            String htmlTemplate = loadEmailTemplate(templateCode);
+
+            // 3. Format the Timestamp
+            // Raw LocalDateTime looks like '2024-12-24T14:30:00'. We want it readable.
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm a");
+            String formattedDate = event.getTimestamp() != null
+                    ? event.getTimestamp().format(formatter)
+                    : "N/A";
+
+            // 4. Prepare Variables for Replacement {{key}}
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("taskId", event.getTaskId());
+            variables.put("userEmail", event.getUserEmail());
+            variables.put("assignedUserId", event.getAssignedUserId());
+            variables.put("taskTitle", event.getTaskTitle());
+            variables.put("userFullName", event.getUserFullName());
+            variables.put("timestamp", formattedDate);
+
+            // 5. Replace variables using your existing helper method
+            String processedHtml = replaceVariables(htmlTemplate, variables);
+
+            // 6. Create and Send Email
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(event.getUserEmail());
+            helper.setSubject("New Task Assigned: " + event.getTaskTitle());
+            helper.setText(processedHtml, true); // true = Is HTML
+            helper.setFrom("system@yourcompany.com"); // Optional: set your sender
+
+            javaMailSender.send(message);
+
+            log.info("Task assigned email sent successfully to {}", event.getUserEmail());
+
+        } catch (Exception e) {
+            log.error("Failed to send task assignment email to {}", event.getUserEmail(), e);
+            // Throwing exception allows RabbitMQ to retry if configured
+            throw new RuntimeException("Failed to send email", e);
+        }
     }
 }
