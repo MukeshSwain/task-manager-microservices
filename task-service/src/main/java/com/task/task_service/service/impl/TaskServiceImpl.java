@@ -6,6 +6,8 @@ import com.task.task_service.exception.ResourceNotFoundException; // Assumed Cus
 import com.task.task_service.feign.ProjectClient;
 import com.task.task_service.feign.UserClient;
 import com.task.task_service.mapper.Mapper;
+import com.task.task_service.messaging.EventPublisher;
+import com.task.task_service.messaging.config.RabbitConfig;
 import com.task.task_service.model.Priority;
 import com.task.task_service.model.Task;
 import com.task.task_service.model.Status; // Assumed Enum
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,10 +34,12 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectClient projectClient;
     private final UserClient userClient;
-    public TaskServiceImpl(TaskRepository taskRepository, ProjectClient projectClient, UserClient userClient) {
+    private final EventPublisher eventPublisher;
+    public TaskServiceImpl(TaskRepository taskRepository, ProjectClient projectClient, UserClient userClient, EventPublisher eventPublisher) {
         this.taskRepository = taskRepository;
         this.projectClient = projectClient;
         this.userClient = userClient;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -110,12 +115,21 @@ public class TaskServiceImpl implements TaskService {
         if(request.getAssignedToAuthId().equals(task.getAssignedToAuthId())){
             return Mapper.toTaskresponse(task);
         }
-        boolean isExistUser = userClient.getUserById(request.getAssignedToAuthId());
-        if (!isExistUser){
+        EmailAndName emailAndName = userClient.getUser(request.getAssignedToAuthId());
+        if (emailAndName == null){
             throw new ResourceNotFoundException("User not found!");
         }
         task.setAssignedToAuthId(request.getAssignedToAuthId());
         Task updated = taskRepository.save(task);
+        TaskAssignedEvent event = TaskAssignedEvent.builder()
+                .taskId(task.getId())
+                .taskTitle(task.getTitle())
+                .userEmail(emailAndName.getEmail())
+                .userFullName(emailAndName.getName())
+                .assignedUserId(request.getAssignedToAuthId())
+                .timestamp(LocalDateTime.now())
+                .build();
+        eventPublisher.publishTaskAssignedEvent(event, RabbitConfig.TASK_ASSIGNED_KEY);
         return Mapper.toTaskresponse(updated);
     }
     @Override

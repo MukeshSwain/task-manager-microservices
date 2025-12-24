@@ -1,5 +1,6 @@
 package com.task.task_service.feign;
 
+import com.task.task_service.dto.EmailAndName;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,4 +9,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserClient {
     @GetMapping("/validate/{authId}")
     Boolean getUserById(@PathVariable String authId);
+    @GetMapping("/email/{authId}")
+    EmailAndName getUser(@PathVariable String authId);
 }

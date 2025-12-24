@@ -21,7 +21,3 @@ spring:
     username: guest
     password: guest
 
-app:
-  rabbitmq:
-    exchange: task-exchange
-    routing-key: task-assigned
