@@ -133,17 +133,17 @@ Below is a high-level overview of the core API endpoints for each service. Full 
 ### 📦 User Service (Spring Boot + MongoDB)
 **Base URL: `/user`**
 
-| Method | Endpoint                     | Description                   |
-|--------|------------------------------|-------------------------------|
-| POST   | `/user`                      | Create a new user             |
-| POST   | `/user/:authId/upload-image` | Upload profile picture        |
-| PUT    | `/user/:authId`              | Update user profile           |
-| GET    | `/user/:authId`              | Get user profile details      |
-| GET    | `/user/all`                  | Get all users profile details |
-| GET    | `/user/lookup`               | Lookup user by email          |
-| GET    | `/user/email/:authId`        | Get email by authId           |
-| POST   | `/user/betch-fetch`          | Get users by authIds          |
-| GET    | `/user/validate/{authId}`    | Validate user by authId       |
+| Method | Endpoint                  | Description                   |
+|--------|---------------------------|-------------------------------|
+| POST   | `/user`                   | Create a new user             |
+| POST   | `/user/upload-image`      | Upload profile picture        |
+| PUT    | `/user`                   | Update user profile           |
+| GET    | `/user/profile`           | Get user profile details      |
+| GET    | `/user/all`               | Get all users profile details |
+| GET    | `/user/lookup`            | Lookup user by email          |
+| GET    | `/user/email/:authId`     | Get email by authId           |
+| POST   | `/user/betch-fetch`       | Get users by authIds          |
+| GET    | `/user/validate/{authId}` | Validate user by authId       |
 
 
 ### 📦 Tenant Service (Spring Boot + PostgresSQL)
