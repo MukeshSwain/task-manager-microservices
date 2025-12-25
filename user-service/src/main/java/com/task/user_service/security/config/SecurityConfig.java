@@ -42,7 +42,7 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/lookup", "/api/users/validate/**", "/api/users/email/**").permitAll()
+                        .requestMatchers("/api/users/lookup", "/api/users/validate/**", "/api/users/email/**", "/api/users/betch-fetch").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

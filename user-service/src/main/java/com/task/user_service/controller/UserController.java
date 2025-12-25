@@ -49,9 +49,10 @@ public class UserController {
     public ResponseEntity<List<UserResponse>> getAllUsers(){
         return ResponseEntity.ok(userService.getAllUsers());
     }
-    @PostMapping("/{id}/upload-image")
-    public ResponseEntity<String> uploadImage(@PathVariable String id, @RequestParam MultipartFile file){
-        return ResponseEntity.ok(userService.uploadImage(id, file));
+    @PostMapping("/upload-image")
+    public ResponseEntity<String> uploadImage( @RequestParam MultipartFile file){
+        String authId = getCurrentUserAuthId();
+        return ResponseEntity.ok(userService.uploadImage(authId, file));
     }
 
     @GetMapping("/lookup")
