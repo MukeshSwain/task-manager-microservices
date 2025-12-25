@@ -3,6 +3,7 @@ package com.task.user_service.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys; // Import this
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets; // Import this for UTF-8
@@ -12,7 +13,8 @@ import java.security.Key;
 public class JwtUtils {
 
     // Ideally, load this from application.properties using @Value("${jwt.secret}")
-    private final String secretKey = "mdu4yr87439ynghui1nw1n/njkfnmfg3u4ygye";
+    @Value("${jwt.secret}")
+    private String secretKey;
 
     public String extractAuthId(String token){
         return extractAllClaims(token).get("id",String.class);

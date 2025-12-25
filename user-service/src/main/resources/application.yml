@@ -16,4 +16,4 @@ cloudinary:
   api_key: ${CLOUDINARY_API_KEY}
   api_secret: ${CLOUDINARY_API_SECRET}
 jwt:
-  secret: mdu4yr87439ynghui1nw1n/njkfnmfg3u4ygye
+  secret: ${JWT_SECRET}
