@@ -26,7 +26,6 @@ public class UserService {
                 .name(user.getName())
                 .email(user.getEmail())
                 .isEmailVerified(user.getIsEmailVerified())
-                .role(Role.valueOf(user.getRole().toUpperCase()))
                 .build();
 
         userRepository.save(userProfile);

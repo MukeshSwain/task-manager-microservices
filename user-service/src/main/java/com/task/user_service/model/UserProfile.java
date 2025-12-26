@@ -18,7 +18,8 @@ import java.util.Map;
 public class UserProfile {
     @Id
     private String id;
-    private Role role;
+    @Builder.Default
+    private Role role = Role.MEMBER;
     private String authId;
     private String email;
     private String name;

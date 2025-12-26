@@ -38,9 +38,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getUser(){
-        log.info("I am hitted......................");
         String authId = getCurrentUserAuthId();
-        log.info("authId: {}", authId);
         UserResponse response = userService.getUserProfile(authId);
         return ResponseEntity.ok(response);
     }

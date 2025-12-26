@@ -6,7 +6,8 @@ spring:
     name: user-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/user-service
+      uri: ${MONGODB_URI}
+      database: userDB
   servlet:
     multipart:
       max-file-size: 10MB
@@ -17,3 +18,9 @@ cloudinary:
   api_secret: ${CLOUDINARY_API_SECRET}
 jwt:
   secret: ${JWT_SECRET}
+internal:
+  jwt:
+  secret: ${INTERNAL_JWT_SECRET}
+
+#  mukeshswain2844_db_user
+#  0ETZ3LhgU5vCgK9Q
