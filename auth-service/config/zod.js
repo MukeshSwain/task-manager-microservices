@@ -29,7 +29,7 @@ export const signupSchema = z.object({
           "Password must include uppercase, lowercase, a number, and a special character.",
       }
     ),
-  role: z.enum(Roles, { message: "Invalid role provided." }),
+  
 });
 
 export const loginSchema = z.object({

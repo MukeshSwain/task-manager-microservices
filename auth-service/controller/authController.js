@@ -35,7 +35,7 @@ export const signup = async (req, res) => {
       });
     }
 
-    const { name, email, password, role } = validation.data;
+    const { name, email, password } = validation.data;
     //Redis rate limit
     const rateLimitKey = `register-rate-limit:${req.ip}:${email}`;
     if (await redisClient.get(rateLimitKey)) {
@@ -64,7 +64,6 @@ export const signup = async (req, res) => {
       name,
       email,
       password: passwordHash,
-      role,
     });
     await redisClient.set(verifyKey, dataStore, { EX: 300 });
 
@@ -119,7 +118,6 @@ export const verifyUser = async (req, res) => {
       data: {
         email: userData.email,
         passwordHash: userData.password,
-        role: userData.role.toUpperCase(),
         isVerified: true,
       },
     });
