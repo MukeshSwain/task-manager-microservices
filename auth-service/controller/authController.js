@@ -350,8 +350,8 @@ export const onInviteSignup = async (req, res) => {
         errors: allErrors,
       });
     }
-    const { name, email, password, role } = validateData.data;
-    if (!name || !email || !password || !role) {
+    const { name, email, password } = validateData.data;
+    if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
     const existUser = await prisma.auth_User.findUnique({
@@ -368,7 +368,6 @@ export const onInviteSignup = async (req, res) => {
       data: {
         email,
         passwordHash,
-        role: role.toUpperCase(),
         isVerified: true,
       },
     });
